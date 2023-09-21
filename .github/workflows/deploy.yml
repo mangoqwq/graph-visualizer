@@ -2,30 +2,30 @@
 name: Node.js CI
 
 on:
-	push:
-		branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
-	build:
-		runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-		steps:
-			- uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-			- uses: actions/setup-node@v2
-				with:
-					# update the Node version to meet your needs
-					node-version: 16
-					cache: npm
+      - uses: actions/setup-node@v2
+        with:
+          # update the Node version to meet your needs
+          node-version: 16
+          cache: npm
 
-			- name: Build
-				run: |
-					npm ci
-					npm run build
-					touch out/.nojekyll
-					# configure the build here
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+          touch out/.nojekyll
+          # configure the build here
 
-			- name: Deploy
+      - name: Deploy
         # https://github.com/JamesIves/github-pages-deploy-action
         uses: JamesIves/github-pages-deploy-action@4.4.0 
         with:
