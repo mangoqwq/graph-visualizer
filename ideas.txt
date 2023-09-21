@@ -1,0 +1,26 @@
+~~multiple tabs~~
+modify (add cycles, paths, Kn, Kn,m, flower, take compliment, make directed/undirected)
+arrange (freeze/unfreeze all planar embed, polygonal embed, dfs tree, bfs tree, etc.)
+locate (bridges, cut vertices, centroid)
+markup (draw bubbles, set edge/vertex highlight style, show ids)
+export (as svg, png, markup, tikz)
+
+possible import from adj matrix/adj list?
+possible algorithm? (shortest path, flow, matching, centroid tree), can throw errors and handle with react hehe
+possible experimental? (adjusting gravity, etc. )
+
+~~input format~~
+
+id:
+id: label
+id id ...
+
+~~difficult stuff~~
+multi-edges/curved edges
+highlight hovered edge/vertex
+dark mode
+
+~~todo~~
+different components shouldn't push each other too far, fix with gravity, or threshold for electric repulsion
+text-editor should properly reflect the inital graph (lone vertices, labeled vertices)
+
