@@ -4,9 +4,9 @@ export type Vertex = {
 };
 
 export type Edge = {
+	id: number;
 	from: number;
 	to: number;
-	directed: boolean;
 };
 
 export type Graph = {
@@ -36,13 +36,15 @@ export function renameVertex(
 	v.label = label;
 }
 
+var nextEdgeId = 0;
+
 export function addEdge(
 	graph: Graph,
+	id: number,
 	from: number,
 	to: number,
-	directed: boolean
 ) {
 	addVertexIfNotExist(graph, from);
 	addVertexIfNotExist(graph, to);
-	graph.edges.push({ from: from, to: to, directed: directed });
+	graph.edges.push({ id: id, from: from, to: to });
 }
