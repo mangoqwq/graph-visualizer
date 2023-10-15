@@ -27,7 +27,6 @@ export const generateGraph = (newText: string, directed: boolean) => {
 			if (res !== null) {
 				const [, from, to] = res;
 				addEdge(ret, edgeId++, parseInt(from), parseInt(to));
-				console.log(from, to);
 			}
 		}
 

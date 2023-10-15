@@ -375,6 +375,7 @@ export default function GraphViewer() {
       width={dim}
       height={dim}
       className="border-solid border-2 m-2 p-2 graph-view-svg"
+			id="graph-view-svg"
     >
       {graph.edges.map((e) => {
         return <EdgeView key={e.id} e={e} />;
