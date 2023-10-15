@@ -6,6 +6,7 @@ import {
   PaintMode,
 	FreezeMode,
 } from "./graph-visualizer";
+import { ColorChangeHandler, SketchPicker, RGBColor, BlockPicker, ChromePicker } from "react-color";
 
 type ModifyMenu = {
   type: "modify";
@@ -216,26 +217,53 @@ function LocateCommandPanel() {
   return (
     <CommandPanel>
       <h2>Locate</h2>
-      <button>Vertex</button>
-      <button>Edge</button>
+      <p>wip</p>
     </CommandPanel>
   );
 }
 
+function PaintCommandPanel() {
+  const { mouseMode, setMouseMode } = useContext(TotalContext);
+	const [color, setColor] = useState<RGBColor>({r: 255, g: 0, b: 0, a: 1});
+	const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
+
+	const getColor = () => {
+		return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
+	}
+
+	const onChange: ColorChangeHandler = (c) => {
+		setColor(c.rgb);
+		if (mouseMode.mode === "paint") {
+			setMouseMode({mode: "paint", subject: mouseMode.subject, color: getColor()});
+		}
+	}
+
+	const onClick = () => {
+		setShowColorPicker(!showColorPicker);
+	}
+
+	return (
+		<>
+			<div className="w-8 h-8 rounded-full border-2" onClick={onClick} style={{background: getColor()}}></div>
+			{showColorPicker ? <ChromePicker onChange={onChange} color={color} className="fixed" /> : null}
+			<button onClick={() => setMouseMode({ mode: "paint", subject: "vertex-border", color: getColor() })}>
+				Paint vertex border
+			</button>
+			<button onClick={() => setMouseMode({ mode: "paint", subject: "vertex-fill", color: getColor() })}>
+				Paint vertex fill
+			</button>
+			<button onClick={() => setMouseMode({ mode: "paint", subject: "edge", color: getColor() })}>
+				Paint edge
+			</button>
+		</>
+	)
+}
+
 function AnnotateCommandPanel() {
-  const { setMouseMode } = useContext(TotalContext);
   return (
     <CommandPanel>
       <h2>Annotate</h2>
-      <button onClick={() => setMouseMode({ mode: "paint", subject: "vertex-border", color: "red" })}>
-        Paint vertex border
-      </button>
-      <button onClick={() => setMouseMode({ mode: "paint", subject: "vertex-fill", color: "blue" })}>
-        Paint vertex fill
-      </button>
-      <button onClick={() => setMouseMode({ mode: "paint", subject: "edge", color: "red" })}>
-        Paint edge
-      </button>
+			<PaintCommandPanel />
     </CommandPanel>
   );
 }

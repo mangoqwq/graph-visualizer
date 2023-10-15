@@ -24,7 +24,7 @@ function placeInBounds(v: Vector) {
 }
 
 function VertexView({ v }: { v: Vertex }) {
-  const { vertexStates, edgeStates, mouseMode, setVertexStates } =
+  const { vertexStates, edgeStates, mouseMode, setVertexStates, mouseDown } =
     useContext(TotalContext);
 
   if (vertexStates.get(v.id) === undefined) return <></>;
@@ -81,22 +81,40 @@ function VertexView({ v }: { v: Vertex }) {
 
   const onClick = () => {
     if (mouseMode.mode === "paint") {
-			if (mouseMode.subject === "vertex-border") {
-				setVertexStates(
-					new Map<number, VertexState>(vertexStates).set(v.id, {
-						...vertexStates.get(v.id)!,
-						borderColor: mouseMode.color,
-					})
-				);
-			}
-			if (mouseMode.subject === "vertex-fill") {
-				setVertexStates(
-					new Map<number, VertexState>(vertexStates).set(v.id, {
-						...vertexStates.get(v.id)!,
-						fillColor: mouseMode.color,
-					})
-				);
-			}
+      if (mouseMode.subject === "vertex-border") {
+        setVertexStates(
+          new Map<number, VertexState>(vertexStates).set(v.id, {
+            ...vertexStates.get(v.id)!,
+            borderColor: mouseMode.color,
+          })
+        );
+      }
+      if (mouseMode.subject === "vertex-fill") {
+        setVertexStates(
+          new Map<number, VertexState>(vertexStates).set(v.id, {
+            ...vertexStates.get(v.id)!,
+            fillColor: mouseMode.color,
+          })
+        );
+      }
+    }
+  };
+  const onMouseEnter = () => {
+    if (mouseMode.mode === "paint" && mouseMode.subject === "vertex-border" && mouseDown) {
+      setVertexStates(
+        new Map<number, VertexState>(vertexStates).set(v.id, {
+          ...vertexStates.get(v.id)!,
+          borderColor: mouseMode.color,
+        })
+      );
+    }
+    if (mouseMode.mode === "paint" && mouseMode.subject === "vertex-fill" && mouseDown) {
+      setVertexStates(
+        new Map<number, VertexState>(vertexStates).set(v.id, {
+          ...vertexStates.get(v.id)!,
+          fillColor: mouseMode.color,
+        })
+      );
     }
   };
 
@@ -108,7 +126,7 @@ function VertexView({ v }: { v: Vertex }) {
       position={{ x: cx, y: cy }}
       key={v.id}
     >
-      <g onClick={onClick}>
+      <g onClick={onClick} onMouseEnter={onMouseEnter}>
         <circle
           // cx={cx}
           // cy={cy}
@@ -133,30 +151,49 @@ function VertexView({ v }: { v: Vertex }) {
 }
 
 function EdgeView({ e }: { e: Edge }) {
-  const { vertexStates, edgeStates, setEdgeStates, mouseMode } = useContext(TotalContext);
+  const { vertexStates, edgeStates, setEdgeStates, mouseMode, mouseDown } =
+    useContext(TotalContext);
   if (vertexStates.get(e.from) === undefined) return <></>;
   if (vertexStates.get(e.to) === undefined) return <></>;
 
-	const onClick = () => {
-		if (mouseMode.mode === "paint") {
-			if (mouseMode.subject === "edge") {
-				setEdgeStates(new Map<number, EdgeState>(edgeStates).set(e.id, {...edgeStates.get(e.id)!, color: mouseMode.color }));
-			}
-		}
-	}
-
-	const onMouseEnter = () => {
-		setEdgeStates(new Map<number, EdgeState>(edgeStates).set(e.id, {...edgeStates.get(e.id)!, color: "red" }));
-	}
-	const onMouseLeave = () => {
-		setEdgeStates(new Map<number, EdgeState>(edgeStates).set(e.id, {...edgeStates.get(e.id)!, color: "black" }));
-	}
+  const onClick = () => {
+    if (mouseMode.mode === "paint" && mouseMode.subject === "edge") {
+      setEdgeStates(
+        new Map<number, EdgeState>(edgeStates).set(e.id, {
+          ...edgeStates.get(e.id)!,
+          color: mouseMode.color,
+        })
+      );
+    }
+  };
+  const onMouseEnter = () => {
+    if (
+      mouseMode.mode === "paint" &&
+      mouseMode.subject === "edge" &&
+      mouseDown
+    ) {
+      setEdgeStates(
+        new Map<number, EdgeState>(edgeStates).set(e.id, {
+          ...edgeStates.get(e.id)!,
+          color: mouseMode.color,
+        })
+      );
+    }
+  };
 
   const { x: x1, y: y1 } = vertexStates.get(e.from)!.pos;
   const { x: x2, y: y2 } = vertexStates.get(e.to)!.pos;
   return (
-    <g onClick={onClick} pointerEvents="all">
-			<line x1={x1} y1={y1} x2={x2} y2={y2} stroke="black" visibility="hidden" strokeWidth="13" />
+    <g onMouseEnter={onMouseEnter} onClick={onClick} pointerEvents="all">
+      <line
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke="black"
+        visibility="hidden"
+        strokeWidth="13"
+      />
       <line
         x1={x1}
         y1={y1}
