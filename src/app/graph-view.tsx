@@ -353,7 +353,7 @@ export default function GraphViewer() {
   const newVStates = new Map<number, VertexState>();
   var changed = false;
   for (const v of graph.vertices) {
-    if (vertexStates.has(v.id)) {
+    if (vertexStates.has(v.id) && !Number.isNaN(vertexStates.get(v.id)!.pos.x)) {
       newVStates.set(v.id, vertexStates.get(v.id)!);
     } else {
       const cx = randInt(r, dim - r);
