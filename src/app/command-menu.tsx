@@ -39,13 +39,10 @@ function InsertSubgraphPanel() {
   type subgraphOptions = "complete" | "complete-bipartite" | "cycle" | "path";
   const [selectedOption, setSelectedOption] = useState<string>("complete");
   const {
-    graph,
-    setGraph,
-    vertexStates,
-    setVertexStates,
-    inputBoxText,
-    setInputBoxText,
+		graphBundle, setGraphBundle,
+		inputBoxText, setInputBoxText,
   } = useContext(TotalContext);
+
 
   const parseIntoList = (s: string) => {
     const ret = s.match(/[^\d-+]*([-+]?\d+)[^\d-+]*/g)!.map((x) => parseInt(x));
@@ -177,30 +174,36 @@ function InsertSubgraphPanel() {
 }
 
 function ModifyCommandPanel() {
-  const { graph, setGraph, vertexStates, setVertexStates } =
+  const { graphBundle, setGraphBundle } =
     useContext(TotalContext);
-  const setDirected = (directed: boolean) => {
-    setGraph({ ...graph, directed: directed });
-  };
+  // const setDirected = (directed: boolean) => {
+  //   setGraph({ ...graph, directed: directed });
+  // };
   return (
     <CommandPanel>
       <InsertSubgraphPanel />
-      <button onClick={() => setDirected(!graph.directed)}>
+      {/* <button onClick={() => setDirected(!graph.directed)}>
         Toggle directed
-      </button>
+      </button> */}
     </CommandPanel>
   );
+	// return (
+	// 	<CommandPanel>
+	// 		WIP
+	// 	</CommandPanel>
+	// )
 }
 
 function ArrangeCommandPanel() {
-  const { graph, setGraph, vertexStates, setVertexStates } =
+  const { graphBundle, setGraphBundle } =
     useContext(TotalContext);
+	const { graph, vertexStates, edgeStates } = graphBundle;
   const setFreeze = (frozen: boolean) => {
     const newVStates = new Map<number, VertexState>(vertexStates);
     for (const v of graph.vertices) {
       newVStates.set(v.id, { ...vertexStates.get(v.id)!, frozen: frozen });
     }
-    setVertexStates(newVStates);
+		setGraphBundle({ ...graphBundle, vertexStates: newVStates });
   };
 
   return (

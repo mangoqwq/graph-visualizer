@@ -42,15 +42,15 @@ export type EdgeState = {
   color: string;
 };
 
-type TotalContextType = {
+export type GraphBundle = {
   graph: Graph;
-  setGraph: React.Dispatch<React.SetStateAction<Graph>>;
   vertexStates: Map<number, VertexState>;
-  setVertexStates: React.Dispatch<
-    React.SetStateAction<Map<number, VertexState>>
-  >;
   edgeStates: Map<number, EdgeState>;
-  setEdgeStates: React.Dispatch<React.SetStateAction<Map<number, EdgeState>>>;
+};
+
+type TotalContextType = {
+	graphBundle: GraphBundle;
+	setGraphBundle: React.Dispatch<React.SetStateAction<GraphBundle>>;
   inputBoxText: string;
   setInputBoxText: React.Dispatch<React.SetStateAction<string>>;
   mouseMode: MouseMode;
@@ -61,12 +61,8 @@ type TotalContextType = {
 };
 
 export const TotalContext = createContext<TotalContextType>({
-  graph: { directed: false, vertices: [], edges: [] },
-  setGraph: () => {},
-  vertexStates: new Map<number, VertexState>(),
-  setVertexStates: () => {},
-  edgeStates: new Map<number, EdgeState>(),
-  setEdgeStates: () => {},
+  graphBundle: { graph: { directed: false, vertices: [], edges: [] }, vertexStates: new Map(), edgeStates: new Map() },
+	setGraphBundle: () => {},
   inputBoxText: "",
   setInputBoxText: () => {},
   mouseMode: { mode: "freeze" },
@@ -84,13 +80,11 @@ export default function GraphVisualizer() {
   const [inputBoxText, setInputBoxText] = useState<string>(
     getDefaultInputBoxText()
   );
-  const [graph, setGraph] = useState<Graph>(generateGraph(inputBoxText, false));
-  const [vertexStates, setVertexStates] = useState<Map<number, VertexState>>(
-    new Map()
-  );
-  const [edgeStates, setEdgeStates] = useState<Map<number, EdgeState>>(
-    new Map()
-  );
+	const [graphBundle, setGraphBundle] = useState<GraphBundle>({
+		graph: generateGraph(inputBoxText, false),
+		vertexStates: new Map(),
+		edgeStates: new Map(),
+	});
   const [mouseMode, setMouseMode] = useState<MouseMode>({ mode: "freeze" });
   const [mouseDown, setMouseDown] = useState<boolean>(false);
   const [windowHeight, setWindowHeight] = useState<number>(1600);
@@ -107,18 +101,14 @@ export default function GraphVisualizer() {
   }, []);
 
   const value: TotalContextType = {
-    graph,
-    setGraph,
-    vertexStates,
-    setVertexStates,
+    graphBundle,
+		setGraphBundle,
     inputBoxText,
     setInputBoxText,
     mouseMode,
     setMouseMode,
     mouseDown,
     setMouseDown,
-    edgeStates,
-    setEdgeStates,
     windowHeight,
   };
 

@@ -1,14 +1,20 @@
 "use client";
 
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { Graph, addEdge, Vertex, Edge } from "./graph";
-import { TotalContext, VertexState, EdgeState } from "./graph-visualizer";
+import {
+  TotalContext,
+  VertexState,
+  EdgeState,
+  GraphBundle,
+} from "./graph-visualizer";
 import Vector from "./vector";
 import Draggable, {
   DraggableData,
   DraggableEvent,
   DraggableEventHandler,
 } from "react-draggable";
+import { parseJsonSourceFileConfigFileContent } from "typescript";
 
 // const dim = (typeof window !== undefined ? window.innerHeight * 0.8 : 800);
 const dimRatio = 0.8;
@@ -24,9 +30,12 @@ function placeInBounds(v: Vector, dim: number) {
 }
 
 function VertexView({ v }: { v: Vertex }) {
-  const { vertexStates, edgeStates, mouseMode, setVertexStates, mouseDown, windowHeight} =
+  const { graphBundle, setGraphBundle, mouseMode, mouseDown, windowHeight } =
     useContext(TotalContext);
-	const dim = windowHeight * dimRatio;
+  const { graph, vertexStates, edgeStates } = graphBundle;
+  const dim = windowHeight * dimRatio;
+  const setVertexStates = (newVStates: Map<number, VertexState>) =>
+    setGraphBundle({ ...graphBundle, vertexStates: newVStates });
 
   if (vertexStates.get(v.id) === undefined) return <></>;
   const { x: cx, y: cy } = vertexStates.get(v.id)!.pos;
@@ -68,7 +77,6 @@ function VertexView({ v }: { v: Vertex }) {
       Date.now() - vertexStates.get(v.id)!.heldAt! < CLICK_TIME_THRESHOLD &&
       new Vector(data.deltaX, data.deltaY).norm() <= 10
     ) {
-      console.log(vertexStates.get(v.id)!.heldAt!, Date.now());
       newFrozen = !newFrozen;
     }
     const newVStates = new Map<number, VertexState>(vertexStates);
@@ -101,7 +109,11 @@ function VertexView({ v }: { v: Vertex }) {
     }
   };
   const onMouseEnter = () => {
-    if (mouseMode.mode === "paint" && mouseMode.subject === "vertex-border" && mouseDown) {
+    if (
+      mouseMode.mode === "paint" &&
+      mouseMode.subject === "vertex-border" &&
+      mouseDown
+    ) {
       setVertexStates(
         new Map<number, VertexState>(vertexStates).set(v.id, {
           ...vertexStates.get(v.id)!,
@@ -109,7 +121,11 @@ function VertexView({ v }: { v: Vertex }) {
         })
       );
     }
-    if (mouseMode.mode === "paint" && mouseMode.subject === "vertex-fill" && mouseDown) {
+    if (
+      mouseMode.mode === "paint" &&
+      mouseMode.subject === "vertex-fill" &&
+      mouseDown
+    ) {
       setVertexStates(
         new Map<number, VertexState>(vertexStates).set(v.id, {
           ...vertexStates.get(v.id)!,
@@ -152,8 +168,11 @@ function VertexView({ v }: { v: Vertex }) {
 }
 
 function EdgeView({ e }: { e: Edge }) {
-  const { vertexStates, edgeStates, setEdgeStates, mouseMode, mouseDown } =
+  const { graphBundle, setGraphBundle, mouseMode, mouseDown } =
     useContext(TotalContext);
+  const { graph, vertexStates, edgeStates } = graphBundle;
+  const setEdgeStates = (newEStates: Map<number, EdgeState>) =>
+    setGraphBundle({ ...graphBundle, edgeStates: newEStates });
   if (vertexStates.get(e.from) === undefined) return <></>;
   if (vertexStates.get(e.to) === undefined) return <></>;
 
@@ -208,14 +227,8 @@ function EdgeView({ e }: { e: Edge }) {
   );
 }
 
-function stepPhysics(
-  graph: Graph,
-  vertexStates: Map<number, VertexState>,
-  setVertexStates: React.Dispatch<
-    React.SetStateAction<Map<number, VertexState>>
-  >,
-	dim: number
-) {
+function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
+  const { graph, vertexStates, edgeStates } = graphBundle;
   // PARAMETERS
   const [CEN_CHARGE, VTX_CHARGE, EDGE_CHARGE] = [-700, 400, 200];
   const [MIN_ELEC_DIST] = [10];
@@ -229,22 +242,6 @@ function stepPhysics(
     changes.set(v1.id, new Vector(0, 0));
   }
   const cen = new Vector(dim / 2, dim / 2);
-
-  // attraction to center
-  // for (const v of graph.vertices) {
-  // 	if (positions.get(v.id) === undefined) continue;
-  // 	const [vx, vy] = positions.get(v.id)!;
-  // 	var [dx, dy] = [cenx - vx, ceny - vy];
-  // 	var dist = Math.sqrt(dx * dx + dy * dy);
-  // 	dx = dx / dist; dy = dy / dist;
-
-  // 	dist = (dim - dist) / 2;
-  // 	const force = -1 * K_CONST * CEN_CHARGE * VTX_CHARGE / (dist ** 2);
-  // 	console.log(force);
-  // 	dx = dx * force; dy = dy * force;
-
-  // 	newPositions.set(v.id, [newPositions.get(v.id)![0] + dx, newPositions.get(v.id)![1] + dy]);
-  // }
 
   // repulsion between vertices
   for (const v1 of graph.vertices) {
@@ -265,26 +262,6 @@ function stepPhysics(
     }
   }
 
-  // repulsion from edges
-  // for (const v1 of graph.vertices) {
-  // 	if (positions.get(v1.id) === undefined) continue;
-  // 	const [vx1, vy1] = positions.get(v1.id)!;
-  // 	const number = graph.edges.length;
-  // 	for (const e of graph.edges) {
-  // 		if (positions.get(e.from) === undefined) continue;
-  // 		if (positions.get(e.to) === undefined) continue;
-  // 		const vx2 = positions.get(e.from)![0] + positions.get(e.to)![0];
-  // 		const vy2 = positions.get(e.from)![1] + positions.get(e.to)![1];
-  // 		var [dx, dy] = [vx2 - vx1, vy2 - vy1];
-  // 		const dist = Math.sqrt(dx * dx + dy * dy);
-  // 		dx = dx / dist; dy = dy / dist;
-  // 		const force = -K_CONST * VTX_CHARGE * VTX_CHARGE / (dist * dist);
-  // 		dx = dx * force / number; dy = dy * force / number;
-
-  // 		newPositions.set(v1.id, [newPositions.get(v1.id)![0] + dx, newPositions.get(v1.id)![1] + dy]);
-  // 	}
-  // }
-
   // edge springs
   // TODO: duplicate edges
   for (const e of graph.edges) {
@@ -303,6 +280,8 @@ function stepPhysics(
   }
 
   const newVStates = new Map<number, VertexState>();
+  const factor = elapsed / 15;
+  console.log(elapsed);
   for (const v of graph.vertices) {
     if (vertexStates.get(v.id) === undefined) continue;
     if (
@@ -314,7 +293,7 @@ function stepPhysics(
     }
     newVStates.set(v.id, {
       ...vertexStates.get(v.id)!,
-      pos: vertexStates.get(v.id)!.pos.add(changes.get(v.id)!),
+      pos: vertexStates.get(v.id)!.pos.add(changes.get(v.id)!.scale(factor)),
     });
   }
 
@@ -325,29 +304,36 @@ function stepPhysics(
     newVStates.set(v.id, { ...cur, pos: placeInBounds(cur.pos, dim) });
   }
 
-  setVertexStates(newVStates);
+	console.log(vertexStates, newVStates);
+
+  return { ...graphBundle, vertexStates: newVStates };
+  // setVertexStates(newVStates);
 }
 
 export default function GraphViewer() {
-  const {
-    graph,
-    setGraph,
-    vertexStates,
-    setVertexStates,
-    edgeStates,
-    setEdgeStates,
-		windowHeight,
-  } = useContext(TotalContext);
-	const dim = windowHeight * dimRatio;
+  const { graphBundle, setGraphBundle, windowHeight } =
+    useContext(TotalContext);
+  const { graph, vertexStates, edgeStates } = graphBundle;
+  const lastTime = useRef<number | undefined>(undefined);
+	const frame = useRef(0);
+  const dim = windowHeight * dimRatio;
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      stepPhysics(graph, vertexStates, setVertexStates, dim);
-    }, 5);
-    return () => {
-      clearInterval(interval);
+    const step = (timeStamp: number) => {
+      if (lastTime.current !== undefined) {
+				const sav = lastTime.current!
+        setGraphBundle((prevState: GraphBundle) =>
+          stepPhysics(prevState, dim, timeStamp - sav)
+        );
+      }
+      lastTime.current = timeStamp;
+      console.log("e" + lastTime.current);
+      // console.log(graph);
+      frame.current = window.requestAnimationFrame(step);
     };
-  }, [graph, vertexStates, dim, setVertexStates]);
+    frame.current = window.requestAnimationFrame(step);
+		return () => { window.cancelAnimationFrame(frame.current) }
+  }, [dim]);
 
   function randInt(l: number, r: number) {
     return Math.floor(Math.random() * (r - l)) + l;
@@ -357,7 +343,10 @@ export default function GraphViewer() {
   const newVStates = new Map<number, VertexState>();
   var changed = false;
   for (const v of graph.vertices) {
-    if (vertexStates.has(v.id) && !Number.isNaN(vertexStates.get(v.id)!.pos.x)) {
+    if (
+      vertexStates.has(v.id) &&
+      !Number.isNaN(vertexStates.get(v.id)!.pos.x)
+    ) {
       newVStates.set(v.id, vertexStates.get(v.id)!);
     } else {
       const cx = randInt(r, dim - r);
@@ -372,14 +361,14 @@ export default function GraphViewer() {
       changed = true;
     }
   }
-  if (changed) setVertexStates(newVStates);
+  if (changed) setGraphBundle({ ...graphBundle, vertexStates: newVStates });
 
   return (
     <svg
       width={dim}
       height={dim}
       className="border-solid border-2 m-2 p-2 graph-view-svg"
-			id="graph-view-svg"
+      id="graph-view-svg"
     >
       {graph.edges.map((e) => {
         return <EdgeView key={e.id} e={e} />;

@@ -38,8 +38,10 @@ export const generateGraph = (newText: string, directed: boolean) => {
 };
 
 export default function TextEditor() {
-	const { graph, setGraph, vertexStates, setVertexStates, inputBoxText, setInputBoxText } = useContext(TotalContext);
+	const { graphBundle, setGraphBundle, inputBoxText, setInputBoxText } = useContext(TotalContext);
+	const { graph, vertexStates, edgeStates } = graphBundle;
 	const [ infoBoxVisible, setInfoBoxVisible ] = useState<boolean>(false);
+	const setGraph = (g: Graph) => { setGraphBundle({ graph: g, vertexStates: vertexStates, edgeStates: edgeStates }) };
 
 	useEffect(() => {
 		setGraph(generateGraph(inputBoxText, graph.directed));
