@@ -1,15 +1,17 @@
+"use client";
+
 import TextEditor from "./text-editor";
 import GraphViewer from "./graph-view";
 import CommandMenu from "./command-menu";
 import { Graph, addEdge } from "./graph";
-import { useState, createContext, useEffect } from "react";
+import { useState, createContext, useEffect, useLayoutEffect } from "react";
 import Vector from "./vector";
 import { generateGraph } from "./text-editor";
-import ReactDOM from 'react-dom'
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+import ReactDOM from "react-dom";
+import { library } from "@fortawesome/fontawesome-svg-core";
+import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 
-library.add(faQuestionCircle)
+library.add(faQuestionCircle);
 
 export type FreezeMode = {
   mode: "freeze";
@@ -55,7 +57,7 @@ type TotalContextType = {
   setMouseMode: React.Dispatch<React.SetStateAction<MouseMode>>;
   mouseDown: boolean;
   setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
-	windowHeight: number;
+  windowHeight: number;
 };
 
 export const TotalContext = createContext<TotalContextType>({
@@ -71,17 +73,17 @@ export const TotalContext = createContext<TotalContextType>({
   setMouseMode: () => {},
   mouseDown: false,
   setMouseDown: () => {},
-	windowHeight: 0,
+  windowHeight: 0,
 });
 
 function getDefaultInputBoxText(): string {
-  return "0 1\n0 2\n0 3\n1 3\n"
+  return "0 1\n0 2\n0 3\n1 3\n";
 }
 
 export default function GraphVisualizer() {
-	const [inputBoxText, setInputBoxText] = useState<string>(
-		getDefaultInputBoxText()
-	);
+  const [inputBoxText, setInputBoxText] = useState<string>(
+    getDefaultInputBoxText()
+  );
   const [graph, setGraph] = useState<Graph>(generateGraph(inputBoxText, false));
   const [vertexStates, setVertexStates] = useState<Map<number, VertexState>>(
     new Map()
@@ -91,15 +93,18 @@ export default function GraphVisualizer() {
   );
   const [mouseMode, setMouseMode] = useState<MouseMode>({ mode: "freeze" });
   const [mouseDown, setMouseDown] = useState<boolean>(false);
-	const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
+  const [windowHeight, setWindowHeight] = useState<number>(1600);
 
-	useEffect(() => {
-		const handleResize = () => {
-			setWindowHeight(window.innerHeight);
-		}
-		window.addEventListener('resize', handleResize);
-		return () => window.removeEventListener('resize', handleResize);
-	}, []);
+  useLayoutEffect(() => {
+    setWindowHeight(window.innerHeight);
+  }, []);
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const value: TotalContextType = {
     graph,
@@ -114,24 +119,24 @@ export default function GraphVisualizer() {
     setMouseDown,
     edgeStates,
     setEdgeStates,
-		windowHeight,
+    windowHeight,
   };
 
   return (
     <main>
       <TotalContext.Provider value={value}>
-				<div className="h-screen w-screen">
-					<div
-						className="flex h-5/6 m-auto"
-						onMouseDown={() => setMouseDown(true)}
-						onMouseUp={() => setMouseDown(false)}
-					>
-						<TextEditor />
-						<GraphViewer />
-						<CommandMenu />
-						<h1>{mouseDown ? "yes" : "no"}</h1>
-					</div>
-				</div>
+        <div className="h-screen w-screen">
+          <div
+            className="flex h-5/6 m-auto"
+            onMouseDown={() => setMouseDown(true)}
+            onMouseUp={() => setMouseDown(false)}
+          >
+            <TextEditor />
+            <GraphViewer />
+            <CommandMenu />
+            <h1>{mouseDown ? "yes" : "no"}</h1>
+          </div>
+        </div>
       </TotalContext.Provider>
     </main>
   );
