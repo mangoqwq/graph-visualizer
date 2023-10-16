@@ -11,10 +11,10 @@ import Draggable, {
 } from "react-draggable";
 
 // const dim = (typeof window !== undefined ? window.innerHeight * 0.8 : 800);
-const dim = 800;
+const dimRatio = 0.8;
 const r = 20;
 
-function placeInBounds(v: Vector) {
+function placeInBounds(v: Vector, dim: number) {
   var { x: vx, y: vy } = v;
   if (vx < 2 * r) vx = 2 * r;
   if (vx > dim - 2 * r) vx = dim - 2 * r;
@@ -24,8 +24,9 @@ function placeInBounds(v: Vector) {
 }
 
 function VertexView({ v }: { v: Vertex }) {
-  const { vertexStates, edgeStates, mouseMode, setVertexStates, mouseDown } =
+  const { vertexStates, edgeStates, mouseMode, setVertexStates, mouseDown, windowHeight} =
     useContext(TotalContext);
+	const dim = windowHeight * dimRatio;
 
   if (vertexStates.get(v.id) === undefined) return <></>;
   const { x: cx, y: cy } = vertexStates.get(v.id)!.pos;
@@ -38,7 +39,7 @@ function VertexView({ v }: { v: Vertex }) {
         Array.from(vertexStates.entries()).map(([id, state]) => {
           if (id === v.id) {
             var { x, y } = data;
-            ({ x, y } = placeInBounds(new Vector(x, y)));
+            ({ x, y } = placeInBounds(new Vector(x, y), dim));
             return [id, { ...vertexStates.get(v.id)!, pos: new Vector(x, y) }];
           } else {
             return [id, state];
@@ -212,7 +213,8 @@ function stepPhysics(
   vertexStates: Map<number, VertexState>,
   setVertexStates: React.Dispatch<
     React.SetStateAction<Map<number, VertexState>>
-  >
+  >,
+	dim: number
 ) {
   // PARAMETERS
   const [CEN_CHARGE, VTX_CHARGE, EDGE_CHARGE] = [-700, 400, 200];
@@ -320,7 +322,7 @@ function stepPhysics(
   for (const v of graph.vertices) {
     if (newVStates.get(v.id) === undefined) continue;
     const cur: VertexState = newVStates.get(v.id)!;
-    newVStates.set(v.id, { ...cur, pos: placeInBounds(cur.pos) });
+    newVStates.set(v.id, { ...cur, pos: placeInBounds(cur.pos, dim) });
   }
 
   setVertexStates(newVStates);
@@ -334,16 +336,18 @@ export default function GraphViewer() {
     setVertexStates,
     edgeStates,
     setEdgeStates,
+		windowHeight,
   } = useContext(TotalContext);
+	const dim = windowHeight * dimRatio;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      stepPhysics(graph, vertexStates, setVertexStates);
+      stepPhysics(graph, vertexStates, setVertexStates, dim);
     }, 5);
     return () => {
       clearInterval(interval);
     };
-  }, [graph, vertexStates]);
+  }, [graph, vertexStates, dim, setVertexStates]);
 
   function randInt(l: number, r: number) {
     return Math.floor(Math.random() * (r - l)) + l;

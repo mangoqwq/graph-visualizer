@@ -3,6 +3,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Graph, addEdge, addVertexIfNotExist, renameVertex } from "./graph";
 import { TotalContext } from "./graph-visualizer";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export const generateGraph = (newText: string, directed: boolean) => {
 	const ret: Graph = { directed: directed, vertices: [], edges: [] };
@@ -38,6 +39,7 @@ export const generateGraph = (newText: string, directed: boolean) => {
 
 export default function TextEditor() {
 	const { graph, setGraph, vertexStates, setVertexStates, inputBoxText, setInputBoxText } = useContext(TotalContext);
+	const [ infoBoxVisible, setInfoBoxVisible ] = useState<boolean>(false);
 
 	useEffect(() => {
 		setGraph(generateGraph(inputBoxText, graph.directed));
@@ -50,13 +52,30 @@ export default function TextEditor() {
 		}
 	};
 
+	const onMouseEnter = () => {
+		setInfoBoxVisible(true);
+	}
+	const onMouseLeave = () => {
+		setInfoBoxVisible(false);
+	}
+
 	return (
-		<div className="h-[80vh]">
-			<textarea
-				className="border-solid border-2 resize-none h-full m-2 p-2"
-				value={inputBoxText}
-				onChange={(e) => onChange(e)}
-			/>
+		<div className="h-[80vh] m-2 flex flex-col">
+			<div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+				Input: <FontAwesomeIcon icon="question-circle" />
+				{infoBoxVisible ? <p className="fixed bg-black color rounded-lg text-white px-2">
+					lone vertex - id <br/>
+					labeled vertex - id: label <br/>
+					edge - id1 id2 <br/>
+				</p>: null}
+			</div>
+			<div className="grow ">
+				<textarea
+					className="border-2 border-solid resize-none h-full"
+					value={inputBoxText}
+					onChange={(e) => onChange(e)}
+				/>
+			</div>
 		</div>
 	);
 }

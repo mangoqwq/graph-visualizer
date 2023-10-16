@@ -2,9 +2,14 @@ import TextEditor from "./text-editor";
 import GraphViewer from "./graph-view";
 import CommandMenu from "./command-menu";
 import { Graph, addEdge } from "./graph";
-import { useState, createContext } from "react";
+import { useState, createContext, useEffect } from "react";
 import Vector from "./vector";
 import { generateGraph } from "./text-editor";
+import ReactDOM from 'react-dom'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+
+library.add(faQuestionCircle)
 
 export type FreezeMode = {
   mode: "freeze";
@@ -50,6 +55,7 @@ type TotalContextType = {
   setMouseMode: React.Dispatch<React.SetStateAction<MouseMode>>;
   mouseDown: boolean;
   setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
+	windowHeight: number;
 };
 
 export const TotalContext = createContext<TotalContextType>({
@@ -65,6 +71,7 @@ export const TotalContext = createContext<TotalContextType>({
   setMouseMode: () => {},
   mouseDown: false,
   setMouseDown: () => {},
+	windowHeight: 0,
 });
 
 function getDefaultInputBoxText(): string {
@@ -84,6 +91,16 @@ export default function GraphVisualizer() {
   );
   const [mouseMode, setMouseMode] = useState<MouseMode>({ mode: "freeze" });
   const [mouseDown, setMouseDown] = useState<boolean>(false);
+	const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
+
+	useEffect(() => {
+		const handleResize = () => {
+			setWindowHeight(window.innerHeight);
+		}
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
   const value: TotalContextType = {
     graph,
     setGraph,
@@ -97,6 +114,7 @@ export default function GraphVisualizer() {
     setMouseDown,
     edgeStates,
     setEdgeStates,
+		windowHeight,
   };
 
   return (
