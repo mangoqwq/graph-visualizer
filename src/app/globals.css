@@ -25,3 +25,12 @@ body {
     )
     rgb(var(--background-start-rgb));
 } */
+
+.command-tab {
+	background: white;
+	flex-grow: 1;
+	flex-basis: 0;
+}
+.command-tab:hover {
+	background: #e4e4e4;
+}

@@ -120,16 +120,18 @@ export default function GraphVisualizer() {
   return (
     <main>
       <TotalContext.Provider value={value}>
-        <div
-          className="flex h-5/6"
-          onMouseDown={() => setMouseDown(true)}
-          onMouseUp={() => setMouseDown(false)}
-        >
-          <TextEditor />
-          <GraphViewer />
-          <CommandMenu />
-          <h1>{mouseDown ? "yes" : "no"}</h1>
-        </div>
+				<div className="h-screen w-screen">
+					<div
+						className="flex h-5/6 m-auto"
+						onMouseDown={() => setMouseDown(true)}
+						onMouseUp={() => setMouseDown(false)}
+					>
+						<TextEditor />
+						<GraphViewer />
+						<CommandMenu />
+						<h1>{mouseDown ? "yes" : "no"}</h1>
+					</div>
+				</div>
       </TotalContext.Provider>
     </main>
   );

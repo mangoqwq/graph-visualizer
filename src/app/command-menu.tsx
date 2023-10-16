@@ -184,7 +184,6 @@ function ModifyCommandPanel() {
   };
   return (
     <CommandPanel>
-      <h2>Modify</h2>
       <InsertSubgraphPanel />
       <button onClick={() => setDirected(!graph.directed)}>
         Toggle directed
@@ -206,7 +205,6 @@ function ArrangeCommandPanel() {
 
   return (
     <CommandPanel>
-      <h2>Arrange</h2>
       <button onClick={() => setFreeze(true)}>Freeze all</button>
       <button onClick={() => setFreeze(false)}>Unfreeze all</button>
     </CommandPanel>
@@ -216,7 +214,6 @@ function ArrangeCommandPanel() {
 function LocateCommandPanel() {
   return (
     <CommandPanel>
-      <h2>Locate</h2>
       <p>wip</p>
     </CommandPanel>
   );
@@ -262,7 +259,6 @@ function PaintCommandPanel() {
 function AnnotateCommandPanel() {
   return (
     <CommandPanel>
-      <h2>Annotate</h2>
 			<PaintCommandPanel />
     </CommandPanel>
   );
@@ -286,7 +282,6 @@ function ExportCommandPanel() {
 
   return (
     <CommandPanel>
-      <h2>Export</h2>
       <button onClick={exportToSVG}>Download SVG</button>
     </CommandPanel>
   );
@@ -323,14 +318,23 @@ export default function CommandMenu() {
     }
   })();
 
+	const style = (type: string) => {
+		var ret = "grow basis-0 "
+		if (menu.type === type) {
+			ret += "bg-gray-200";
+		}
+		else ret += "hover:bg-gray-100 active:bg-gray-200"
+		return ret;
+	}
+
   return (
     <div className="w-2/6 h-full m-2 p-2">
       <CommandBar>
-        <button onClick={() => setMenu({ type: "modify" })}>Modify</button>
-        <button onClick={() => setMenu({ type: "arrange" })}>Arrange</button>
-        <button onClick={() => setMenu({ type: "locate" })}>Locate</button>
-        <button onClick={() => setMenu({ type: "annotate" })}>Markup</button>
-        <button onClick={() => setMenu({ type: "export" })}>Export</button>
+        <button onClick={() => setMenu({ type: "modify" })} className={style("modify")}>Modify</button>
+        <button onClick={() => setMenu({ type: "arrange" })} className={style("arrange")}>Arrange</button>
+        <button onClick={() => setMenu({ type: "locate" })} className={style("locate")}>Locate</button>
+        <button onClick={() => setMenu({ type: "annotate" })} className={style("annotate")}>Annotate</button>
+        <button onClick={() => setMenu({ type: "export" })} className={style("export")}>Export</button>
       </CommandBar>
       {commandPanel}
     </div>
