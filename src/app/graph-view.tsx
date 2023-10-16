@@ -235,7 +235,7 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
   const [K_CONST] = [0.5];
 
   const [SPR_CONST] = [15];
-  const [SPR_LEN] = [100];
+  const [SPR_LEN] = [100 + graph.vertices.length * 5];
 
   const changes = new Map<number, Vector>();
   for (const v1 of graph.vertices) {
