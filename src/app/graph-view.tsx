@@ -17,7 +17,7 @@ import Draggable, {
 import { parseJsonSourceFileConfigFileContent } from "typescript";
 
 // const dim = (typeof window !== undefined ? window.innerHeight * 0.8 : 800);
-const dimRatio = 0.8;
+const dimRatio = 5/6;
 const r = 20;
 
 function placeInBounds(v: Vector, dim: number) {
@@ -281,7 +281,6 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
 
   const newVStates = new Map<number, VertexState>();
   const factor = Math.min(elapsed / 15, 3);
-  console.log(elapsed);
   for (const v of graph.vertices) {
     if (vertexStates.get(v.id) === undefined) continue;
     if (
@@ -304,7 +303,6 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
     newVStates.set(v.id, { ...cur, pos: placeInBounds(cur.pos, dim) });
   }
 
-	console.log(vertexStates, newVStates);
 
   return { ...graphBundle, vertexStates: newVStates };
   // setVertexStates(newVStates);
@@ -327,8 +325,6 @@ export default function GraphViewer() {
         );
       }
       lastTime.current = timeStamp;
-      console.log("e" + lastTime.current);
-      // console.log(graph);
       frame.current = window.requestAnimationFrame(step);
     };
     frame.current = window.requestAnimationFrame(step);
@@ -364,18 +360,20 @@ export default function GraphViewer() {
   if (changed) setGraphBundle({ ...graphBundle, vertexStates: newVStates });
 
   return (
-    <svg
-      width={dim}
-      height={dim}
-      className="border-solid border-2 m-2 p-2 graph-view-svg"
-      id="graph-view-svg"
-    >
-      {graph.edges.map((e) => {
-        return <EdgeView key={e.id} e={e} />;
-      })}
-      {graph.vertices.map((v) => {
-        return <VertexView key={v.id} v={v} />;
-      })}
-    </svg>
+		<div className="min-w-[${dim}] min-h-[${dim}]">
+			<svg
+				width={dim}
+				height={dim}
+				className="border-solid border-2 graph-view-svg"
+				id="graph-view-svg"
+			>
+				{graph.edges.map((e) => {
+					return <EdgeView key={e.id} e={e} />;
+				})}
+				{graph.vertices.map((v) => {
+					return <VertexView key={v.id} v={v} />;
+				})}
+			</svg>
+		</div>
   );
 }

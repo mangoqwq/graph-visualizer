@@ -62,7 +62,7 @@ export default function TextEditor() {
 	}
 
 	return (
-		<div className="h-[80vh] m-2 flex flex-col">
+		<div className=" flex flex-col">
 			<div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
 				Input: <FontAwesomeIcon icon="question-circle" className="max-h-6 max-w-6" />
 				{infoBoxVisible ? <p className="fixed bg-black color rounded-lg text-white px-2">

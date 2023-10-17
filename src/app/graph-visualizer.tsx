@@ -49,8 +49,8 @@ export type GraphBundle = {
 };
 
 type TotalContextType = {
-	graphBundle: GraphBundle;
-	setGraphBundle: React.Dispatch<React.SetStateAction<GraphBundle>>;
+  graphBundle: GraphBundle;
+  setGraphBundle: React.Dispatch<React.SetStateAction<GraphBundle>>;
   inputBoxText: string;
   setInputBoxText: React.Dispatch<React.SetStateAction<string>>;
   mouseMode: MouseMode;
@@ -61,8 +61,12 @@ type TotalContextType = {
 };
 
 export const TotalContext = createContext<TotalContextType>({
-  graphBundle: { graph: { directed: false, vertices: [], edges: [] }, vertexStates: new Map(), edgeStates: new Map() },
-	setGraphBundle: () => {},
+  graphBundle: {
+    graph: { directed: false, vertices: [], edges: [] },
+    vertexStates: new Map(),
+    edgeStates: new Map(),
+  },
+  setGraphBundle: () => {},
   inputBoxText: "",
   setInputBoxText: () => {},
   mouseMode: { mode: "freeze" },
@@ -80,14 +84,14 @@ export default function GraphVisualizer() {
   const [inputBoxText, setInputBoxText] = useState<string>(
     getDefaultInputBoxText()
   );
-	const [graphBundle, setGraphBundle] = useState<GraphBundle>({
-		graph: generateGraph(inputBoxText, false),
-		vertexStates: new Map(),
-		edgeStates: new Map(),
-	});
+  const [graphBundle, setGraphBundle] = useState<GraphBundle>({
+    graph: generateGraph(inputBoxText, false),
+    vertexStates: new Map(),
+    edgeStates: new Map(),
+  });
   const [mouseMode, setMouseMode] = useState<MouseMode>({ mode: "freeze" });
   const [mouseDown, setMouseDown] = useState<boolean>(false);
-  const [windowHeight, setWindowHeight] = useState<number>(1600);
+  const [windowHeight, setWindowHeight] = useState<number>(800);
 
   useLayoutEffect(() => {
     setWindowHeight(window.innerHeight);
@@ -102,7 +106,7 @@ export default function GraphVisualizer() {
 
   const value: TotalContextType = {
     graphBundle,
-		setGraphBundle,
+    setGraphBundle,
     inputBoxText,
     setInputBoxText,
     mouseMode,
@@ -115,16 +119,15 @@ export default function GraphVisualizer() {
   return (
     <main>
       <TotalContext.Provider value={value}>
-        <div className="h-screen w-screen">
-          <div
-            className="flex h-5/6 m-auto"
-            onMouseDown={() => setMouseDown(true)}
-            onMouseUp={() => setMouseDown(false)}
-          >
+        <div
+          className="h-screen m-screen flex"
+          onMouseDown={() => setMouseDown(true)}
+          onMouseUp={() => setMouseDown(false)}
+        >
+          <div className="flex h-5/6 m-auto">
             <TextEditor />
             <GraphViewer />
             <CommandMenu />
-            <h1>{mouseDown ? "yes" : "no"}</h1>
           </div>
         </div>
       </TotalContext.Provider>
