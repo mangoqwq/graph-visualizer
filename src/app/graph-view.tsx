@@ -235,7 +235,7 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
   const [K_CONST] = [0.5];
 
   const [SPR_CONST] = [15];
-  const [SPR_LEN] = [100 + graph.vertices.length * 5];
+  const [SPR_LEN] = [100 + graph.edges.length];
 
   const changes = new Map<number, Vector>();
   for (const v1 of graph.vertices) {
@@ -280,7 +280,7 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
   }
 
   const newVStates = new Map<number, VertexState>();
-  const factor = elapsed / 15;
+  const factor = Math.min(elapsed / 15, 3);
   console.log(elapsed);
   for (const v of graph.vertices) {
     if (vertexStates.get(v.id) === undefined) continue;
