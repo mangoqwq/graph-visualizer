@@ -218,15 +218,20 @@ function InsertSubgraphPanel() {
 
 function ModifyCommandPanel() {
   const { graphBundle, setGraphBundle } = useContext(TotalContext);
-  // const setDirected = (directed: boolean) => {
-  //   setGraph({ ...graph, directed: directed });
-  // };
+	const { graph, vertexStates, edgeStates } = graphBundle;
+  const setDirected = (directed: boolean) => {
+		console.log(directed)
+		setGraphBundle({ ...graphBundle, graph: { ...graph, directed: directed } });
+  };
   return (
     <CommandPanel>
       <InsertSubgraphPanel />
-      {/* <button onClick={() => setDirected(!graph.directed)}>
-        Toggle directed
-      </button> */}
+			<div style={{ margin: "15px 0" }}></div> {/* Horizontal line */}
+			<div className="flex flex-row w-full">
+				<button onClick={() => setDirected(!graph.directed)} className="panel-button grow basis-0">
+					Toggle directed
+				</button>
+			</div>
     </CommandPanel>
   );
   // return (

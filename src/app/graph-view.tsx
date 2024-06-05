@@ -17,7 +17,7 @@ import Draggable, {
 import { parseJsonSourceFileConfigFileContent } from "typescript";
 
 // const dim = (typeof window !== undefined ? window.innerHeight * 0.8 : 800);
-const dimRatio = 5/6;
+const dimRatio = 5 / 6;
 const r = 20;
 
 function placeInBounds(v: Vector, dim: number) {
@@ -203,39 +203,84 @@ function EdgeView({ e }: { e: Edge }) {
 
   const { x: x1, y: y1 } = vertexStates.get(e.from)!.pos;
   const { x: x2, y: y2 } = vertexStates.get(e.to)!.pos;
+  const radius = 20; // radius of the nodes
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  
+  const len = Math.sqrt(dx * dx + dy * dy);
+  
+  const unitX = dx / len;
+  const unitY = dy / len;
+  
+  const x1_adjusted = x1 + unitX * radius;
+  const y1_adjusted = y1 + unitY * radius;
+  
+  const x2_adjusted = x2 - unitX * radius;
+  const y2_adjusted = y2 - unitY * radius;
+  
   return (
-    <g onMouseEnter={onMouseEnter} onClick={onClick} pointerEvents="all">
-      <line
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke="black"
-        visibility="hidden"
-        strokeWidth="13"
-      />
-      <line
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke={edgeStates.get(e.id)?.color ?? "black"}
-        strokeWidth="2"
-      />
-      {/* <text x={(x1 + x2) / 2} y={(y1 + y2) / 2}>{e.id}</text> */}
-    </g>
+    <svg>
+      <defs>
+        <marker
+          id="arrowhead"
+          markerWidth="5"
+          markerHeight="6"
+          refX="5"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 5 3, 0 6" />
+        </marker>
+      </defs>
+      <g onMouseEnter={onMouseEnter} onClick={onClick} pointerEvents="all">
+        <line
+          x1={x1_adjusted}
+          y1={y1_adjusted}
+          x2={x2_adjusted}
+          y2={y2_adjusted}
+          stroke="black"
+          visibility="hidden"
+          strokeWidth="13"
+        />
+        <line
+          x1={x1_adjusted}
+          y1={y1_adjusted}
+          x2={x2_adjusted}
+          y2={y2_adjusted}
+          stroke={edgeStates.get(e.id)?.color ?? "black"}
+          strokeWidth="2"
+          marker-end={graph.directed ? "url(#arrowhead)" : ""}
+        />
+        {/* <text x={(x1 + x2) / 2} y={(y1 + y2) / 2}>{e.id}</text> */}
+      </g>
+    </svg>
   );
 }
 
+// Constants for physics calculations
+const PHYSICS_CONSTANTS = {
+  CEN_CHARGE: -700,
+  VTX_CHARGE: 400,
+  EDGE_CHARGE: 200,
+  MIN_ELEC_DIST: 10,
+  K_CONST: 0.5,
+  SPR_CONST: 15,
+  SPR_LEN: 100,
+};
+
 function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
   const { graph, vertexStates, edgeStates } = graphBundle;
-  // PARAMETERS
-  const [CEN_CHARGE, VTX_CHARGE, EDGE_CHARGE] = [-700, 400, 200];
-  const [MIN_ELEC_DIST] = [10];
-  const [K_CONST] = [0.5];
-
-  const [SPR_CONST] = [15];
-  const [SPR_LEN] = [100 + graph.edges.length];
+  const {
+    CEN_CHARGE,
+    VTX_CHARGE,
+    EDGE_CHARGE,
+    MIN_ELEC_DIST,
+    K_CONST,
+    SPR_CONST,
+    SPR_LEN,
+  } = PHYSICS_CONSTANTS;
+  const TRUE_SPR_LEN = SPR_LEN + graph.edges.length;
 
   const changes = new Map<number, Vector>();
   for (const v1 of graph.vertices) {
@@ -272,7 +317,7 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
     const p2 = vertexStates.get(e.to)!.pos;
     const diff = p2.sub(p1);
     const dist = diff.norm();
-    const force = SPR_CONST * (dist - SPR_LEN);
+    const force = SPR_CONST * (dist - TRUE_SPR_LEN);
     const d = diff.scaleToLength(force / dist);
 
     changes.set(e.from, changes.get(e.from)!.add(d));
@@ -303,7 +348,6 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
     newVStates.set(v.id, { ...cur, pos: placeInBounds(cur.pos, dim) });
   }
 
-
   return { ...graphBundle, vertexStates: newVStates };
   // setVertexStates(newVStates);
 }
@@ -313,13 +357,13 @@ export default function GraphViewer() {
     useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
   const lastTime = useRef<number | undefined>(undefined);
-	const frame = useRef(0);
+  const frame = useRef(0);
   const dim = windowHeight * dimRatio;
 
   useEffect(() => {
     const step = (timeStamp: number) => {
       if (lastTime.current !== undefined) {
-				const sav = lastTime.current!
+        const sav = lastTime.current!;
         setGraphBundle((prevState: GraphBundle) =>
           stepPhysics(prevState, dim, timeStamp - sav)
         );
@@ -328,7 +372,9 @@ export default function GraphViewer() {
       frame.current = window.requestAnimationFrame(step);
     };
     frame.current = window.requestAnimationFrame(step);
-		return () => { window.cancelAnimationFrame(frame.current) }
+    return () => {
+      window.cancelAnimationFrame(frame.current);
+    };
   }, [dim]);
 
   function randInt(l: number, r: number) {
@@ -360,20 +406,20 @@ export default function GraphViewer() {
   if (changed) setGraphBundle({ ...graphBundle, vertexStates: newVStates });
 
   return (
-		<div className="min-w-[${dim}] min-h-[${dim}]">
-			<svg
-				width={dim}
-				height={dim}
-				className="border-solid border-2 graph-view-svg"
-				id="graph-view-svg"
-			>
-				{graph.edges.map((e) => {
-					return <EdgeView key={e.id} e={e} />;
-				})}
-				{graph.vertices.map((v) => {
-					return <VertexView key={v.id} v={v} />;
-				})}
-			</svg>
-		</div>
+    <div className="min-w-[${dim}] min-h-[${dim}]">
+      <svg
+        width={dim}
+        height={dim}
+        className="border-solid border-2 graph-view-svg"
+        id="graph-view-svg"
+      >
+        {graph.edges.map((e) => {
+          return <EdgeView key={e.id} e={e} />;
+        })}
+        {graph.vertices.map((v) => {
+          return <VertexView key={v.id} v={v} />;
+        })}
+      </svg>
+    </div>
   );
 }
