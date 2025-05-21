@@ -48,3 +48,37 @@ export function addEdge(
 	addVertexIfNotExist(graph, to);
 	graph.edges.push({ id: id, from: from, to: to });
 }
+
+export function toAdjList(graph: Graph): Map<number, number[]> {
+	const adjList: Map<number, number[]> = new Map();
+	for (const vertex of graph.vertices) {
+		adjList.set(vertex.id, []);
+	}
+	for (const edge of graph.edges) {
+		if (adjList.has(edge.from)) {
+			adjList.get(edge.from)?.push(edge.to);
+		}
+		if (!graph.directed) {
+			if (adjList.has(edge.to)) {
+				adjList.get(edge.to)?.push(edge.from);
+			}
+		}
+	}
+	return adjList;
+}
+
+export function toBidirectionalAdjList(graph: Graph): Map<number, number[]> {
+	const adjList: Map<number, number[]> = new Map();
+	for (const vertex of graph.vertices) {
+		adjList.set(vertex.id, []);
+	}
+	for (const edge of graph.edges) {
+		if (adjList.has(edge.from)) {
+			adjList.get(edge.from)?.push(edge.to);
+		}
+		if (adjList.has(edge.to)) {
+			adjList.get(edge.to)?.push(edge.from);
+		}
+	}
+	return adjList;
+}

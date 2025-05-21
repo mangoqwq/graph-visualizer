@@ -17,7 +17,7 @@ import Draggable, {
 import { parseJsonSourceFileConfigFileContent } from "typescript";
 
 // const dim = (typeof window !== undefined ? window.innerHeight * 0.8 : 800);
-const dimRatio = 5 / 6;
+export const graphViewDimRatio = 5 / 6;
 const r = 20;
 
 function placeInBounds(v: Vector, dim: number) {
@@ -33,7 +33,7 @@ function VertexView({ v }: { v: Vertex }) {
   const { graphBundle, setGraphBundle, mouseMode, mouseDown, windowHeight } =
     useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
-  const dim = windowHeight * dimRatio;
+  const dim = windowHeight * graphViewDimRatio;
   const setVertexStates = (newVStates: Map<number, VertexState>) =>
     setGraphBundle({ ...graphBundle, vertexStates: newVStates });
 
@@ -352,13 +352,14 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
   // setVertexStates(newVStates);
 }
 
+
 export default function GraphViewer() {
   const { graphBundle, setGraphBundle, windowHeight } =
     useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
   const lastTime = useRef<number | undefined>(undefined);
   const frame = useRef(0);
-  const dim = windowHeight * dimRatio;
+  const dim = windowHeight * graphViewDimRatio;
 
   useEffect(() => {
     const step = (timeStamp: number) => {

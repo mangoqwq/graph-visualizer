@@ -1,7 +1,7 @@
 "use client";
 
 import TextEditor from "./text-editor";
-import GraphViewer from "./graph-view";
+import GraphViewer, { graphViewDimRatio } from "./graph-view";
 import CommandMenu from "./command-menu";
 import { Graph, addEdge } from "./graph";
 import { useState, createContext, useEffect, useLayoutEffect } from "react";
@@ -58,6 +58,7 @@ type TotalContextType = {
   mouseDown: boolean;
   setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
   windowHeight: number;
+  graphViewDim: number;
 };
 
 export const TotalContext = createContext<TotalContextType>({
@@ -74,6 +75,7 @@ export const TotalContext = createContext<TotalContextType>({
   mouseDown: false,
   setMouseDown: () => {},
   windowHeight: 0,
+  graphViewDim: 0,
 });
 
 function getDefaultInputBoxText(): string {
@@ -92,13 +94,16 @@ export default function GraphVisualizer() {
   const [mouseMode, setMouseMode] = useState<MouseMode>({ mode: "freeze" });
   const [mouseDown, setMouseDown] = useState<boolean>(false);
   const [windowHeight, setWindowHeight] = useState<number>(800);
+  const [graphViewDim, setGraphViewDim] = useState<number>(0);
 
   useLayoutEffect(() => {
     setWindowHeight(window.innerHeight);
+    setGraphViewDim(window.innerHeight * graphViewDimRatio)
   }, []);
   useEffect(() => {
     const handleResize = () => {
       setWindowHeight(window.innerHeight);
+      setGraphViewDim(window.innerHeight * graphViewDimRatio)
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -114,6 +119,7 @@ export default function GraphVisualizer() {
     mouseDown,
     setMouseDown,
     windowHeight,
+    graphViewDim
   };
 
   return (

@@ -5,7 +5,9 @@ import {
   MouseMode,
   PaintMode,
   FreezeMode,
+  GraphBundle,
 } from "./graph-visualizer";
+import { arrangeAsBfsTree, arrangeAsDfsTree, arrangeAsDag } from "./algorithm";
 import {
   ColorChangeHandler,
   SketchPicker,
@@ -40,6 +42,17 @@ type MenuState =
   | LocateMenu
   | AnnotateMenu
   | ExportMenu;
+
+function HorizontalLine() {
+  return (
+    <div
+      style={{
+        borderBottom: "1px solid #ccc",
+        margin: "15px 0",
+      }}
+    ></div>
+  );
+}
 
 function InsertSubgraphPanel() {
   type subgraphOptions = "complete" | "complete-bipartite" | "cycle" | "path";
@@ -111,7 +124,7 @@ function InsertSubgraphPanel() {
             <input
               type="text"
               name="vertices"
-              placeholder="Vertices"
+              placeholder="Vertices (e.x. 1 2 3)"
               className={className}
             />
           );
@@ -121,13 +134,13 @@ function InsertSubgraphPanel() {
               <input
                 type="text"
                 name="vertices1"
-                placeholder="Side 1"
+                placeholder="Side 1 (e.x. 1 2 3)"
                 className={className}
               />
               <input
                 type="text"
                 name="vertices2"
-                placeholder="Side 2"
+                placeholder="Side 2 (e.x. 4 5 6)"
                 className={className}
               />
             </>
@@ -137,7 +150,7 @@ function InsertSubgraphPanel() {
             <input
               type="text"
               name="vertices"
-              placeholder="Vertices"
+              placeholder="Vertices (e.x. 1 2 3)"
               className={className}
             />
           );
@@ -146,7 +159,7 @@ function InsertSubgraphPanel() {
             <input
               type="text"
               name="vertices"
-              placeholder="Vertices"
+              placeholder="Vertices (e.x. 1 2 3)"
               className={className}
             />
           );
@@ -218,20 +231,23 @@ function InsertSubgraphPanel() {
 
 function ModifyCommandPanel() {
   const { graphBundle, setGraphBundle } = useContext(TotalContext);
-	const { graph, vertexStates, edgeStates } = graphBundle;
+  const { graph, vertexStates, edgeStates } = graphBundle;
   const setDirected = (directed: boolean) => {
-		console.log(directed)
-		setGraphBundle({ ...graphBundle, graph: { ...graph, directed: directed } });
+    console.log(directed);
+    setGraphBundle({ ...graphBundle, graph: { ...graph, directed: directed } });
   };
   return (
     <CommandPanel>
       <InsertSubgraphPanel />
-			<div style={{ margin: "15px 0" }}></div> {/* Horizontal line */}
-			<div className="flex flex-row w-full">
-				<button onClick={() => setDirected(!graph.directed)} className="panel-button grow basis-0">
-					Toggle directed
-				</button>
-			</div>
+      <HorizontalLine />
+      <div className="flex flex-row w-full">
+        <button
+          onClick={() => setDirected(!graph.directed)}
+          className="panel-button grow basis-0"
+        >
+          Toggle directed
+        </button>
+      </div>
     </CommandPanel>
   );
   // return (
@@ -241,31 +257,115 @@ function ModifyCommandPanel() {
   // )
 }
 
-function ArrangeCommandPanel() {
-  const { graphBundle, setGraphBundle } = useContext(TotalContext);
+function ArrangeAsTreePanel() {
+  const { graphBundle, setGraphBundle, windowHeight, graphViewDim } =
+    useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
-  const setFreeze = (frozen: boolean) => {
-    const newVStates = new Map<number, VertexState>(vertexStates);
-    for (const v of graph.vertices) {
-      newVStates.set(v.id, { ...vertexStates.get(v.id)!, frozen: frozen });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    var sourceVertexId = parseInt(e.currentTarget.vertices.value.trim());
+    if (isNaN(sourceVertexId)) {
+      sourceVertexId = Math.min(...graph.vertices.map((v) => v.id));
     }
-    setGraphBundle({ ...graphBundle, vertexStates: newVStates });
+
+    const native = e.nativeEvent as SubmitEvent;
+    const button = native.submitter as HTMLButtonElement;
+    const type = button.value;
+    if (!isNaN(sourceVertexId)) {
+      if (type === "bfs") {
+        const newGraphBundle = arrangeAsBfsTree(
+          graphBundle,
+          sourceVertexId,
+          graphViewDim
+        );
+        setGraphBundle(newGraphBundle);
+      } else if (type === "dfs") {
+        const newGraphBundle = arrangeAsDfsTree(
+          graphBundle,
+          sourceVertexId,
+          graphViewDim
+        );
+        setGraphBundle(newGraphBundle);
+      }
+    }
   };
+
+  return (
+    <form
+      autoComplete="off"
+      method="post"
+      className="flex flex-col"
+      onSubmit={handleSubmit}
+    >
+      <input
+        type="text"
+        name="vertices"
+        placeholder="Source vertex id (e.x. 1)"
+        className="px-1 focus:outline-none focus:border-transparent"
+      />
+      <div className="flex flex-row w-full">
+        <button
+          type="submit"
+          name="type"
+          value="bfs"
+          className="panel-button grow basis-0"
+        >
+          Arrange BFS order
+        </button>
+        <button
+          type="submit"
+          name="type"
+          value="dfs"
+          className="panel-button grow basis-0"
+        >
+          Arrange DFS order
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function setFreeze(frozen: boolean, graphBundle: GraphBundle): GraphBundle {
+  const { graph, vertexStates } = graphBundle;
+  const newVStates = new Map<number, VertexState>(vertexStates);
+  for (const v of graph.vertices) {
+    newVStates.set(v.id, { ...vertexStates.get(v.id)!, frozen: frozen });
+  }
+  return { ...graphBundle, vertexStates: newVStates };
+}
+
+function ArrangeCommandPanel() {
+  const { graphBundle, setGraphBundle, graphViewDim } = useContext(TotalContext);
+  const { graph, vertexStates, edgeStates } = graphBundle;
 
   return (
     <CommandPanel>
       <div className="flex flex-row w-full">
         <button
-          onClick={() => setFreeze(true)}
+          onClick={() => setGraphBundle(setFreeze(true, graphBundle))}
           className="panel-button grow basis-0"
         >
           Freeze all
         </button>
         <button
-          onClick={() => setFreeze(false)}
+          onClick={() => setGraphBundle(setFreeze(false, graphBundle))}
           className="panel-button grow basis-0"
         >
           Unfreeze all
+        </button>
+      </div>
+      <HorizontalLine />
+      <ArrangeAsTreePanel />
+      <HorizontalLine />
+      <div className="flex flex-row w-full">
+        <button
+          onClick={() =>
+            setGraphBundle(arrangeAsDag(graphBundle, graphViewDim))
+          }
+          className="panel-button grow basis-0"
+        >
+          Topological sort
         </button>
       </div>
     </CommandPanel>
