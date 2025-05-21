@@ -35,6 +35,7 @@ export type VertexState = {
   frozen: boolean;
   heldAt: number | null;
   borderColor: string;
+  textBold: boolean;
   fillColor: string;
 };
 

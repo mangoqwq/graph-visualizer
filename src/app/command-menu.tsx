@@ -520,9 +520,32 @@ function PaintCommandPanel() {
 }
 
 function AnnotateCommandPanel() {
+  const { graphBundle, setGraphBundle } = useContext(TotalContext);
+  const { graph, vertexStates } = graphBundle;
+
+  const boldVertexLabels = () => {
+    const newVStates = new Map<number, VertexState>(vertexStates);
+    for (const v of graph.vertices) {
+      newVStates.set(v.id, {
+        ...vertexStates.get(v.id)!,
+        textBold: !vertexStates.get(v.id)!.textBold,
+      });
+    }
+    setGraphBundle({ ...graphBundle, vertexStates: newVStates });
+  }
+
   return (
     <CommandPanel>
       <PaintCommandPanel />
+      <HorizontalLine />
+      <div className="flex flex-row w-full">
+        <button
+          onClick={boldVertexLabels}
+          className="panel-button grow basis-0"
+        >
+          Toggle bold vertex labels
+        </button>
+      </div>
     </CommandPanel>
   );
 }

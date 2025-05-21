@@ -159,6 +159,7 @@ function VertexView({ v }: { v: Vertex }) {
           textAnchor="middle"
           alignmentBaseline="middle"
           className="select-none"
+          fontWeight={vertexStates.get(v.id)!.textBold ? "bold" : "normal"}
         >
           {v.label === null ? v.id : v.label}
         </text>
@@ -398,6 +399,7 @@ export default function GraphViewer() {
         pos: new Vector(cx, cy),
         frozen: false,
         heldAt: null,
+        textBold: false,
         borderColor: "black",
         fillColor: "white",
       });
