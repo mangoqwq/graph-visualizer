@@ -123,7 +123,10 @@ export function arrangeAsDag(graphBundle: GraphBundle, graphViewDim: number): Gr
 	var layer: Map<number, number> = new Map();
 	for (let i = 0; i < order.length; i++) {
 		const v = order[i];
-		const curLayer = layer.get(v) ?? 0;
+		if (layer.get(v) === undefined) {
+			layer.set(v, 0);
+		}
+		const curLayer = layer.get(v)!;
 		for (const to of adj.get(v)!) {
 			console.log(v, to);
 			if (layer.get(to) === undefined) {
