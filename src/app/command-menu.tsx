@@ -523,12 +523,12 @@ function AnnotateCommandPanel() {
   const { graphBundle, setGraphBundle } = useContext(TotalContext);
   const { graph, vertexStates } = graphBundle;
 
-  const boldVertexLabels = () => {
+  const setBoldVertexLabels = (enable: boolean) => {
     const newVStates = new Map<number, VertexState>(vertexStates);
     for (const v of graph.vertices) {
       newVStates.set(v.id, {
         ...vertexStates.get(v.id)!,
-        textBold: !vertexStates.get(v.id)!.textBold,
+        textBold: enable,
       });
     }
     setGraphBundle({ ...graphBundle, vertexStates: newVStates });
@@ -540,10 +540,16 @@ function AnnotateCommandPanel() {
       <HorizontalLine />
       <div className="flex flex-row w-full">
         <button
-          onClick={boldVertexLabels}
+          onClick={() => setBoldVertexLabels(true)}
           className="panel-button grow basis-0"
         >
-          Toggle bold vertex labels
+          Bold vertex labels
+        </button>
+        <button
+          onClick={() => setBoldVertexLabels(false)}
+          className="panel-button grow basis-0"
+        >
+          Unbold vertex labels
         </button>
       </div>
     </CommandPanel>
