@@ -7,7 +7,12 @@ import {
   FreezeMode,
   GraphBundle,
 } from "./graph-visualizer";
-import { arrangeAsBfsTree, arrangeAsDfsTree, arrangeAsDag } from "./algorithm";
+import {
+  ArrangeDirection,
+  arrangeAsBfsTree,
+  arrangeAsDfsTree,
+  arrangeAsDag,
+} from "./algorithm";
 import {
   ColorChangeHandler,
   SketchPicker,
@@ -257,10 +262,12 @@ function ModifyCommandPanel() {
   // )
 }
 
-function ArrangeAsTreePanel() {
+function ArrangeAsPanel() {
   const { graphBundle, setGraphBundle, windowHeight, graphViewDim } =
     useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
+  const [arrangeDirection, setArrangeDirection] =
+    useState<ArrangeDirection>("down");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -277,14 +284,16 @@ function ArrangeAsTreePanel() {
         const newGraphBundle = arrangeAsBfsTree(
           graphBundle,
           sourceVertexId,
-          graphViewDim
+          graphViewDim,
+          arrangeDirection
         );
         setGraphBundle(newGraphBundle);
       } else if (type === "dfs") {
         const newGraphBundle = arrangeAsDfsTree(
           graphBundle,
           sourceVertexId,
-          graphViewDim
+          graphViewDim,
+          arrangeDirection
         );
         setGraphBundle(newGraphBundle);
       }
@@ -292,37 +301,79 @@ function ArrangeAsTreePanel() {
   };
 
   return (
-    <form
-      autoComplete="off"
-      method="post"
-      className="flex flex-col"
-      onSubmit={handleSubmit}
-    >
-      <input
-        type="text"
-        name="vertices"
-        placeholder="Source vertex id (e.x. 1)"
-        className="px-1 focus:outline-none focus:border-transparent"
-      />
-      <div className="flex flex-row w-full">
-        <button
-          type="submit"
-          name="type"
-          value="bfs"
-          className="panel-button grow basis-0"
-        >
-          Arrange BFS order
-        </button>
-        <button
-          type="submit"
-          name="type"
-          value="dfs"
-          className="panel-button grow basis-0"
-        >
-          Arrange DFS order
-        </button>
+    <div className="flex flex-row">
+      <div className="flex flex-col justify-around space-y-2">
+        {[
+          "down" as ArrangeDirection,
+          "up" as ArrangeDirection,
+          "left" as ArrangeDirection,
+          "right" as ArrangeDirection,
+        ].map((type) => (
+            <button
+              key={type}
+              type="submit"
+              name="type"
+              value={type}
+              className={`grow basis-0 text-lg font-mono aspect-square ${
+              arrangeDirection === type
+              ? "bg-gray-200"
+              : "bg-white hover:bg-gray-100"
+              }`}
+              onClick={() => setArrangeDirection(type)}
+            >
+              {type === "down" && "↓"}
+              {type === "up" && "↑"}
+              {type === "left" && "←"}
+              {type === "right" && "→"}
+            </button>
+        ))}
       </div>
-    </form>
+      <div className="border-l border-gray-300 mx-2"></div>
+      <form
+        autoComplete="off"
+        method="post"
+        className="flex flex-col"
+        onSubmit={handleSubmit}
+      >
+        <input
+          type="text"
+          name="vertices"
+          placeholder="Source vertex id (e.x. 1)"
+          className="px-1 focus:outline-none focus:border-transparent"
+        />
+        <div className="flex flex-row w-full">
+          <button
+            type="submit"
+            name="type"
+            value="bfs"
+            className="panel-button grow basis-0"
+          >
+            Arrange BFS order
+          </button>
+          <button
+            type="submit"
+            name="type"
+            value="dfs"
+            className="panel-button grow basis-0"
+          >
+            Arrange DFS order
+          </button>
+        </div>
+        <HorizontalLine />
+        <div className="flex flex-row w-full">
+          <button
+            onClick={() =>
+              setGraphBundle(
+                arrangeAsDag(graphBundle, graphViewDim, arrangeDirection)
+              )
+            }
+            className="panel-button grow basis-0"
+          >
+            Arrange DAG
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -336,7 +387,8 @@ function setFreeze(frozen: boolean, graphBundle: GraphBundle): GraphBundle {
 }
 
 function ArrangeCommandPanel() {
-  const { graphBundle, setGraphBundle, graphViewDim } = useContext(TotalContext);
+  const { graphBundle, setGraphBundle, graphViewDim } =
+    useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
 
   return (
@@ -356,18 +408,7 @@ function ArrangeCommandPanel() {
         </button>
       </div>
       <HorizontalLine />
-      <ArrangeAsTreePanel />
-      <HorizontalLine />
-      <div className="flex flex-row w-full">
-        <button
-          onClick={() =>
-            setGraphBundle(arrangeAsDag(graphBundle, graphViewDim))
-          }
-          className="panel-button grow basis-0"
-        >
-          Topological sort
-        </button>
-      </div>
+      <ArrangeAsPanel />
     </CommandPanel>
   );
 }
@@ -532,7 +573,7 @@ function AnnotateCommandPanel() {
       });
     }
     setGraphBundle({ ...graphBundle, vertexStates: newVStates });
-  }
+  };
 
   return (
     <CommandPanel>
