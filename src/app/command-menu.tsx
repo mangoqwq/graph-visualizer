@@ -12,6 +12,7 @@ import {
   arrangeAsBfsTree,
   arrangeAsDfsTree,
   arrangeAsDag,
+  arrangeAsDagDagre,
 } from "./algorithm";
 import {
   ColorChangeHandler,
@@ -364,7 +365,7 @@ function ArrangeAsPanel() {
           <button
             onClick={() =>
               setGraphBundle(
-                arrangeAsDag(graphBundle, graphViewDim, arrangeDirection)
+                arrangeAsDagDagre(graphBundle, graphViewDim, arrangeDirection)
               )
             }
             className="panel-button grow basis-0"

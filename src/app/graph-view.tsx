@@ -30,6 +30,8 @@ function placeInBounds(v: Vector, dim: number) {
 }
 
 function VertexView({ v }: { v: Vertex }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const nodeRef = React.useRef(null);
   const { graphBundle, setGraphBundle, mouseMode, mouseDown, windowHeight } =
     useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
@@ -142,8 +144,9 @@ function VertexView({ v }: { v: Vertex }) {
       onStop={onStop}
       position={{ x: cx, y: cy }}
       key={v.id}
+      nodeRef={nodeRef}
     >
-      <g onClick={onClick} onMouseEnter={onMouseEnter}>
+      <g ref={nodeRef} onClick={onClick} onMouseEnter={onMouseEnter}>
         <circle
           // cx={cx}
           // cy={cy}
@@ -251,7 +254,7 @@ function EdgeView({ e }: { e: Edge }) {
           y2={y2_adjusted}
           stroke={edgeStates.get(e.id)?.color ?? "black"}
           strokeWidth="2"
-          marker-end={graph.directed ? "url(#arrowhead)" : ""}
+          markerEnd={graph.directed ? "url(#arrowhead)" : ""}
         />
         {/* <text x={(x1 + x2) / 2} y={(y1 + y2) / 2}>{e.id}</text> */}
       </g>
@@ -383,30 +386,33 @@ export default function GraphViewer() {
     return Math.floor(Math.random() * (r - l)) + l;
   }
 
-  // const pos = new Map<number, [number, number]>();
-  const newVStates = new Map<number, VertexState>();
-  var changed = false;
-  for (const v of graph.vertices) {
-    if (
-      vertexStates.has(v.id) &&
-      !Number.isNaN(vertexStates.get(v.id)!.pos.x)
-    ) {
-      newVStates.set(v.id, vertexStates.get(v.id)!);
-    } else {
-      const cx = randInt(r, dim - r);
-      const cy = randInt(r, dim - r);
-      newVStates.set(v.id, {
-        pos: new Vector(cx, cy),
-        frozen: false,
-        heldAt: null,
-        textBold: false,
-        borderColor: "black",
-        fillColor: "white",
-      });
-      changed = true;
+  useEffect(() => {
+    const newVStates = new Map<number, VertexState>();
+    let changed = false;
+  
+    for (const v of graph.vertices) {
+      if (vertexStates.has(v.id) && !Number.isNaN(vertexStates.get(v.id)!.pos.x)) {
+        newVStates.set(v.id, vertexStates.get(v.id)!);
+      } else {
+        const cx = randInt(r, dim - r);
+        const cy = randInt(r, dim - r);
+        newVStates.set(v.id, {
+          pos: new Vector(cx, cy),
+          frozen: false,
+          heldAt: null,
+          textBold: false,
+          borderColor: "black",
+          fillColor: "white",
+        });
+        changed = true;
+      }
     }
-  }
-  if (changed) setGraphBundle({ ...graphBundle, vertexStates: newVStates });
+  
+    if (changed) {
+      setGraphBundle({ ...graphBundle, vertexStates: newVStates });
+    }
+  }, [graph.vertices, vertexStates, dim]);
+  
 
   return (
     <div className="min-w-[${dim}] min-h-[${dim}]">

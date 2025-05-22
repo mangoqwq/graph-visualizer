@@ -16,10 +16,11 @@
     "@types/react": "18.2.21",
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.15",
+    "dagre": "^0.8.5",
     "eslint": "8.48.0",
     "eslint-config-next": "13.4.19",
-    "next": "^13.4.19",
-    "postcss": "8.4.29",
+    "next": "^15.3.2",
+    "postcss": "^8.5.3",
     "react": "18.2.0",
     "react-color": "^2.19.3",
     "react-dom": "18.2.0",
@@ -28,6 +29,7 @@
     "typescript": "5.2.2"
   },
   "devDependencies": {
+    "@types/dagre": "^0.7.52",
     "@types/react-color": "^3.0.7"
   }
 }

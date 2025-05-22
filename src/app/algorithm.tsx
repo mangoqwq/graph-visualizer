@@ -3,6 +3,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Graph, addEdge, toAdjList, toBidirectionalAdjList } from "./graph";
 import { GraphBundle, TotalContext, VertexState } from "./graph-visualizer";
+import * as dagre from "dagre";
 import Vector from "./vector";
 
 export type ArrangeDirection = "down" | "up" | "left" | "right";
@@ -187,4 +188,78 @@ export function arrangeAsDag(
   }
   console.log(layer, layers);
   return arrangeLayers(graphBundle, layers, graphViewDim, arrangeDirection);
+}
+
+
+export function arrangeAsDagDagre(
+  graphBundle: GraphBundle,
+  graphViewDim: number,
+  arrangeDirection: ArrangeDirection
+): GraphBundle {
+  const { graph, vertexStates } = graphBundle;
+  if (graph.vertices.length === 0) return graphBundle;
+  if (!graph.directed) {
+    alert("Graph is not directed");
+    return graphBundle;
+  }
+
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({
+    rankdir: (() => {
+      switch (arrangeDirection) {
+        case "down": return "TB";
+        case "up": return "BT";
+        case "left": return "RL";
+        case "right": return "LR";
+      }
+    })(),
+    nodesep: 50,
+    ranksep: 100,
+  });
+  g.setDefaultEdgeLabel(() => ({}));
+
+  for (const v of graph.vertices) {
+    g.setNode(v.id.toString(), { width: 1, height: 1 });
+  }
+
+  for (const e of graph.edges) {
+    g.setEdge(e.from.toString(), e.to.toString());
+  }
+
+  dagre.layout(g);
+
+  // Compute bounding box of Dagre output
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+
+  g.nodes().forEach((id: string) => {
+    const { x, y } = g.node(id);
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  });
+
+  const width = maxX - minX;
+  const height = maxY - minY;
+
+  // Scale and translate to fit within graphViewDim x graphViewDim
+  const padding = 100;
+  const scaleX = (graphViewDim - 2 * padding) / width;
+  const scaleY = (graphViewDim - 2 * padding) / height;
+
+  const newVStates = new Map<number, VertexState>();
+  g.nodes().forEach((id: string) => {
+    const { x, y } = g.node(id);
+    const scaledX = ((x - minX) * scaleX) + padding;
+    const scaledY = ((y - minY) * scaleY) + padding;
+
+    newVStates.set(parseInt(id), {
+      ...vertexStates.get(parseInt(id))!,
+      pos: new Vector(scaledX, scaledY),
+      frozen: true,
+    });
+  });
+
+  return { ...graphBundle, vertexStates: newVStates };
 }
