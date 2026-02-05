@@ -23,11 +23,14 @@ export const generateGraph = (newText: string, directed: boolean) => {
 			}
 		}
 		const matchEdge = () => {
-			const re = /^\s*(-?\d+)\s+(-?\d+)\s*$/;
+			// Capture from, to, and optional label (everything after the second token)
+			const re = /^\s*(-?\d+)\s+(-?\d+)\s*(.*)$/;
 			const res = line.match(re);
 			if (res !== null) {
-				const [, from, to] = res;
-				addEdge(ret, edgeId++, parseInt(from), parseInt(to));
+				const [, from, to, labelRaw] = res;
+				const label =
+					labelRaw !== undefined && labelRaw.trim() !== "" ? labelRaw.trim() : null;
+				addEdge(ret, edgeId++, parseInt(from), parseInt(to), label);
 			}
 		}
 

@@ -172,8 +172,13 @@ function VertexView({ v }: { v: Vertex }) {
 }
 
 function EdgeView({ e }: { e: Edge }) {
-  const { graphBundle, setGraphBundle, mouseMode, mouseDown } =
-    useContext(TotalContext);
+  const {
+    graphBundle,
+    setGraphBundle,
+    mouseMode,
+    mouseDown,
+    edgeLabelStyle,
+  } = useContext(TotalContext);
   const { graph, vertexStates, edgeStates } = graphBundle;
   const setEdgeStates = (newEStates: Map<number, EdgeState>) =>
     setGraphBundle({ ...graphBundle, edgeStates: newEStates });
@@ -211,18 +216,33 @@ function EdgeView({ e }: { e: Edge }) {
 
   const dx = x2 - x1;
   const dy = y2 - y1;
-  
+
   const len = Math.sqrt(dx * dx + dy * dy);
-  
+
   const unitX = dx / len;
   const unitY = dy / len;
-  
+
   const x1_adjusted = x1 + unitX * radius;
   const y1_adjusted = y1 + unitY * radius;
-  
+
   const x2_adjusted = x2 - unitX * radius;
   const y2_adjusted = y2 - unitY * radius;
-  
+
+  const midX = (x1_adjusted + x2_adjusted) / 2;
+  const midY = (y1_adjusted + y2_adjusted) / 2;
+
+  const gapHalf = 12;
+  const gapStartX = midX - unitX * gapHalf;
+  const gapStartY = midY - unitY * gapHalf;
+  const gapEndX = midX + unitX * gapHalf;
+  const gapEndY = midY + unitY * gapHalf;
+
+  const offsetDist = 12;
+  const perpX = -unitY;
+  const perpY = unitX;
+  const offsetMidX = midX + perpX * offsetDist;
+  const offsetMidY = midY + perpY * offsetDist;
+
   return (
     <svg>
       <defs>
@@ -238,6 +258,7 @@ function EdgeView({ e }: { e: Edge }) {
         </marker>
       </defs>
       <g onMouseEnter={onMouseEnter} onClick={onClick} pointerEvents="all">
+        {/* invisible wide line to keep hover/click targets comfortable */}
         <line
           x1={x1_adjusted}
           y1={y1_adjusted}
@@ -247,15 +268,54 @@ function EdgeView({ e }: { e: Edge }) {
           visibility="hidden"
           strokeWidth="13"
         />
-        <line
-          x1={x1_adjusted}
-          y1={y1_adjusted}
-          x2={x2_adjusted}
-          y2={y2_adjusted}
-          stroke={edgeStates.get(e.id)?.color ?? "black"}
-          strokeWidth="2"
-          markerEnd={graph.directed ? "url(#arrowhead)" : ""}
-        />
+
+        {edgeLabelStyle === "gap" && e.label ? (
+          <>
+            <line
+              x1={x1_adjusted}
+              y1={y1_adjusted}
+              x2={gapStartX}
+              y2={gapStartY}
+              stroke={edgeStates.get(e.id)?.color ?? "black"}
+              strokeWidth="2"
+            />
+            <line
+              x1={gapEndX}
+              y1={gapEndY}
+              x2={x2_adjusted}
+              y2={y2_adjusted}
+              stroke={edgeStates.get(e.id)?.color ?? "black"}
+              strokeWidth="2"
+              markerEnd={graph.directed ? "url(#arrowhead)" : ""}
+            />
+          </>
+        ) : (
+          <line
+            x1={x1_adjusted}
+            y1={y1_adjusted}
+            x2={x2_adjusted}
+            y2={y2_adjusted}
+            stroke={edgeStates.get(e.id)?.color ?? "black"}
+            strokeWidth="2"
+            markerEnd={graph.directed ? "url(#arrowhead)" : ""}
+          />
+        )}
+
+        {e.label && (
+          <text
+            x={edgeLabelStyle === "offset" ? offsetMidX : midX}
+            y={edgeLabelStyle === "offset" ? offsetMidY : midY}
+            textAnchor="middle"
+            alignmentBaseline="middle"
+            fontSize="16"
+            stroke="white"
+            strokeWidth="3"
+            paintOrder="stroke fill"
+            pointerEvents="none"
+          >
+            {e.label}
+          </text>
+        )}
         {/* <text x={(x1 + x2) / 2} y={(y1 + y2) / 2}>{e.id}</text> */}
       </g>
     </svg>

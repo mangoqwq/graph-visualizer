@@ -562,7 +562,12 @@ function PaintCommandPanel() {
 }
 
 function AnnotateCommandPanel() {
-  const { graphBundle, setGraphBundle } = useContext(TotalContext);
+  const {
+    graphBundle,
+    setGraphBundle,
+    edgeLabelStyle,
+    setEdgeLabelStyle,
+  } = useContext(TotalContext);
   const { graph, vertexStates } = graphBundle;
 
   const setBoldVertexLabels = (enable: boolean) => {
@@ -593,6 +598,24 @@ function AnnotateCommandPanel() {
         >
           Unbold vertex labels
         </button>
+      </div>
+      <HorizontalLine />
+      <div className="flex flex-col space-y-2">
+        <div className="font-semibold">Edge label style</div>
+        <div className="flex space-x-2">
+          <button
+            className={`panel-button grow basis-0 ${edgeLabelStyle === "gap" ? "bg-gray-200" : ""}`}
+            onClick={() => setEdgeLabelStyle("gap")}
+          >
+            Gap (default)
+          </button>
+          <button
+            className={`panel-button grow basis-0 ${edgeLabelStyle === "offset" ? "bg-gray-200" : ""}`}
+            onClick={() => setEdgeLabelStyle("offset")}
+          >
+            Offset
+          </button>
+        </div>
       </div>
     </CommandPanel>
   );

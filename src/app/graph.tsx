@@ -7,6 +7,7 @@ export type Edge = {
 	id: number;
 	from: number;
 	to: number;
+	label?: string | null;
 };
 
 export type Graph = {
@@ -43,10 +44,11 @@ export function addEdge(
 	id: number,
 	from: number,
 	to: number,
+	label: string | null = null,
 ) {
 	addVertexIfNotExist(graph, from);
 	addVertexIfNotExist(graph, to);
-	graph.edges.push({ id: id, from: from, to: to });
+	graph.edges.push({ id: id, from: from, to: to, label });
 }
 
 export function toAdjList(graph: Graph): Map<number, number[]> {

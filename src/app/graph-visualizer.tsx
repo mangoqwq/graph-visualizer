@@ -13,6 +13,8 @@ import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 
 library.add(faQuestionCircle);
 
+export type EdgeLabelStyle = "gap" | "offset";
+
 export type FreezeMode = {
   mode: "freeze";
 };
@@ -60,6 +62,8 @@ type TotalContextType = {
   setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
   windowHeight: number;
   graphViewDim: number;
+  edgeLabelStyle: EdgeLabelStyle;
+  setEdgeLabelStyle: React.Dispatch<React.SetStateAction<EdgeLabelStyle>>;
 };
 
 export const TotalContext = createContext<TotalContextType>({
@@ -77,6 +81,8 @@ export const TotalContext = createContext<TotalContextType>({
   setMouseDown: () => {},
   windowHeight: 0,
   graphViewDim: 0,
+  edgeLabelStyle: "gap",
+  setEdgeLabelStyle: () => {},
 });
 
 function getDefaultInputBoxText(): string {
@@ -96,6 +102,7 @@ export default function GraphVisualizer() {
   const [mouseDown, setMouseDown] = useState<boolean>(false);
   const [windowHeight, setWindowHeight] = useState<number>(800);
   const [graphViewDim, setGraphViewDim] = useState<number>(0);
+  const [edgeLabelStyle, setEdgeLabelStyle] = useState<EdgeLabelStyle>("gap");
 
   useLayoutEffect(() => {
     setWindowHeight(window.innerHeight);
@@ -120,7 +127,9 @@ export default function GraphVisualizer() {
     mouseDown,
     setMouseDown,
     windowHeight,
-    graphViewDim
+    graphViewDim,
+    edgeLabelStyle,
+    setEdgeLabelStyle,
   };
 
   return (
