@@ -171,7 +171,13 @@ function VertexView({ v }: { v: Vertex }) {
   );
 }
 
-function EdgeView({ e }: { e: Edge }) {
+type EdgeViewProps = {
+  e: Edge;
+  parallelIndex: number;
+  parallelCount: number;
+};
+
+function EdgeView({ e, parallelIndex, parallelCount }: EdgeViewProps) {
   const {
     graphBundle,
     setGraphBundle,
@@ -217,7 +223,7 @@ function EdgeView({ e }: { e: Edge }) {
   const dx = x2 - x1;
   const dy = y2 - y1;
 
-  const len = Math.sqrt(dx * dx + dy * dy);
+  const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
 
   const unitX = dx / len;
   const unitY = dy / len;
@@ -231,17 +237,93 @@ function EdgeView({ e }: { e: Edge }) {
   const midX = (x1_adjusted + x2_adjusted) / 2;
   const midY = (y1_adjusted + y2_adjusted) / 2;
 
-  const gapHalf = 12;
-  const gapStartX = midX - unitX * gapHalf;
-  const gapStartY = midY - unitY * gapHalf;
-  const gapEndX = midX + unitX * gapHalf;
-  const gapEndY = midY + unitY * gapHalf;
-
-  const offsetDist = 12;
   const perpX = -unitY;
   const perpY = unitX;
-  const offsetMidX = midX + perpX * offsetDist;
-  const offsetMidY = midY + perpY * offsetDist;
+
+  const offsetStep = 80;
+  const offset =
+    parallelCount === 1
+      ? 0
+      : (parallelIndex - (parallelCount - 1) / 2) * offsetStep;
+
+  const controlX = midX + perpX * offset;
+  const controlY = midY + perpY * offset;
+
+  const quadPoint = (t: number) => {
+    const oneMinusT = 1 - t;
+    const x =
+      oneMinusT * oneMinusT * x1_adjusted +
+      2 * oneMinusT * t * controlX +
+      t * t * x2_adjusted;
+    const y =
+      oneMinusT * oneMinusT * y1_adjusted +
+      2 * oneMinusT * t * controlY +
+      t * t * y2_adjusted;
+    return { x, y };
+  };
+
+  const quadTangent = (t: number) => {
+    const tx =
+      2 * (1 - t) * (controlX - x1_adjusted) + 2 * t * (x2_adjusted - controlX);
+    const ty =
+      2 * (1 - t) * (controlY - y1_adjusted) + 2 * t * (y2_adjusted - controlY);
+    return { x: tx, y: ty };
+  };
+
+  const labelBase = quadPoint(0.5);
+  const tangentMid = quadTangent(0.5);
+  const tangentLen = Math.max(
+    1,
+    Math.sqrt(tangentMid.x * tangentMid.x + tangentMid.y * tangentMid.y)
+  );
+  const normalMid = {
+    x: -tangentMid.y / tangentLen,
+    y: tangentMid.x / tangentLen,
+  };
+
+  const labelOffset = edgeLabelStyle === "offset" ? 12 : 0;
+  const labelPos = {
+    x: labelBase.x + normalMid.x * labelOffset,
+    y: labelBase.y + normalMid.y * labelOffset,
+  };
+
+  // Split quadratic at t1 < 0.5 < t2 to create a gap around the label for "gap" style
+  const gapHalf = 12;
+  const tDelta = Math.min(0.1, gapHalf / len);
+  const t1 = Math.max(0, 0.5 - tDelta);
+  const t2 = Math.min(1, 0.5 + tDelta);
+
+  const splitQuad = (
+    p0: { x: number; y: number },
+    c: { x: number; y: number },
+    p1: { x: number; y: number },
+    t: number
+  ) => {
+    const p0c = { x: p0.x + (c.x - p0.x) * t, y: p0.y + (c.y - p0.y) * t };
+    const cp1 = { x: c.x + (p1.x - c.x) * t, y: c.y + (p1.y - c.y) * t };
+    const mid = { x: p0c.x + (cp1.x - p0c.x) * t, y: p0c.y + (cp1.y - p0c.y) * t };
+    return {
+      left: { p0, c: p0c, p1: mid },
+      right: { p0: mid, c: cp1, p1 },
+    };
+  };
+
+  const firstSplit = splitQuad(
+    { x: x1_adjusted, y: y1_adjusted },
+    { x: controlX, y: controlY },
+    { x: x2_adjusted, y: y2_adjusted },
+    t1
+  );
+  const secondSplit = splitQuad(
+    firstSplit.right.p0,
+    firstSplit.right.c,
+    firstSplit.right.p1,
+    (t2 - t1) / (1 - t1)
+  );
+
+  const seg1 = firstSplit.left;
+  const segGap = secondSplit.left;
+  const seg2 = secondSplit.right;
 
   return (
     <svg>
@@ -258,53 +340,45 @@ function EdgeView({ e }: { e: Edge }) {
         </marker>
       </defs>
       <g onMouseEnter={onMouseEnter} onClick={onClick} pointerEvents="all">
-        {/* invisible wide line to keep hover/click targets comfortable */}
-        <line
-          x1={x1_adjusted}
-          y1={y1_adjusted}
-          x2={x2_adjusted}
-          y2={y2_adjusted}
+        {/* invisible wide path to keep hover/click targets comfortable */}
+        <path
+          d={`M ${x1_adjusted} ${y1_adjusted} Q ${controlX} ${controlY} ${x2_adjusted} ${y2_adjusted}`}
           stroke="black"
           visibility="hidden"
           strokeWidth="13"
+          fill="none"
         />
 
         {edgeLabelStyle === "gap" && e.label ? (
           <>
-            <line
-              x1={x1_adjusted}
-              y1={y1_adjusted}
-              x2={gapStartX}
-              y2={gapStartY}
+            <path
+              d={`M ${seg1.p0.x} ${seg1.p0.y} Q ${seg1.c.x} ${seg1.c.y} ${seg1.p1.x} ${seg1.p1.y}`}
               stroke={edgeStates.get(e.id)?.color ?? "black"}
               strokeWidth="2"
+              fill="none"
             />
-            <line
-              x1={gapEndX}
-              y1={gapEndY}
-              x2={x2_adjusted}
-              y2={y2_adjusted}
+            <path
+              d={`M ${seg2.p0.x} ${seg2.p0.y} Q ${seg2.c.x} ${seg2.c.y} ${seg2.p1.x} ${seg2.p1.y}`}
               stroke={edgeStates.get(e.id)?.color ?? "black"}
               strokeWidth="2"
+              fill="none"
               markerEnd={graph.directed ? "url(#arrowhead)" : ""}
             />
           </>
         ) : (
-          <line
-            x1={x1_adjusted}
-            y1={y1_adjusted}
-            x2={x2_adjusted}
-            y2={y2_adjusted}
+          <path
+            d={`M ${x1_adjusted} ${y1_adjusted} Q ${controlX} ${controlY} ${x2_adjusted} ${y2_adjusted}`}
             stroke={edgeStates.get(e.id)?.color ?? "black"}
             strokeWidth="2"
+            fill="none"
             markerEnd={graph.directed ? "url(#arrowhead)" : ""}
           />
         )}
 
         {e.label && (
           <text
-            x={edgeLabelStyle === "offset" ? offsetMidX : midX}
-            y={edgeLabelStyle === "offset" ? offsetMidY : midY}
+            x={labelPos.x}
+            y={labelPos.y}
             textAnchor="middle"
             alignmentBaseline="middle"
             fontSize="16"
@@ -371,12 +445,18 @@ function stepPhysics(graphBundle: GraphBundle, dim: number, elapsed: number) {
     }
   }
 
-  // edge springs
-  // TODO: duplicate edges
+  // edge springs (ignore duplicate/parallel edges so they don't amplify force)
+  const appliedSprings = new Set<string>();
   for (const e of graph.edges) {
     if (vertexStates.get(e.from) === undefined) continue;
     if (vertexStates.get(e.to) === undefined) continue;
     if (vertexStates.get(e.to)! === vertexStates.get(e.from)!) continue;
+    const a = Math.min(e.from, e.to);
+    const b = Math.max(e.from, e.to);
+    const key = `${a}-${b}`;
+    if (appliedSprings.has(key)) continue;
+    appliedSprings.add(key);
+
     const p1 = vertexStates.get(e.from)!.pos;
     const p2 = vertexStates.get(e.to)!.pos;
     const diff = p2.sub(p1);
@@ -424,6 +504,25 @@ export default function GraphViewer() {
   const lastTime = useRef<number | undefined>(undefined);
   const frame = useRef(0);
   const dim = windowHeight * graphViewDimRatio;
+
+  // Precompute parallel edge info (unordered vertex pairs)
+  const edgeParallelInfo = new Map<
+    number,
+    { index: number; count: number }
+  >();
+  const families = new Map<string, Edge[]>();
+  graph.edges.forEach((edge) => {
+    const a = Math.min(edge.from, edge.to);
+    const b = Math.max(edge.from, edge.to);
+    const key = `${a}-${b}`;
+    if (!families.has(key)) families.set(key, []);
+    families.get(key)!.push(edge);
+  });
+  families.forEach((edges) => {
+    edges.forEach((edge, idx) => {
+      edgeParallelInfo.set(edge.id, { index: idx, count: edges.length });
+    });
+  });
 
   useEffect(() => {
     const step = (timeStamp: number) => {
@@ -483,7 +582,15 @@ export default function GraphViewer() {
         id="graph-view-svg"
       >
         {graph.edges.map((e) => {
-          return <EdgeView key={e.id} e={e} />;
+          const info = edgeParallelInfo.get(e.id)!;
+          return (
+            <EdgeView
+              key={e.id}
+              e={e}
+              parallelIndex={info.index}
+              parallelCount={info.count}
+            />
+          );
         })}
         {graph.vertices.map((v) => {
           return <VertexView key={v.id} v={v} />;
