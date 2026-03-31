@@ -5,6 +5,35 @@ import { Graph, addEdge, addVertexIfNotExist, renameVertex } from "./graph";
 import { TotalContext } from "./graph-visualizer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+function decodeEscapedNewlines(label: string) {
+	let decoded = "";
+
+	for (let i = 0; i < label.length; i++) {
+		if (label[i] !== "\\") {
+			decoded += label[i];
+			continue;
+		}
+
+		let slashCount = 0;
+		while (i + slashCount < label.length && label[i + slashCount] === "\\") {
+			slashCount++;
+		}
+
+		const nextChar = label[i + slashCount];
+		if (nextChar === "n") {
+			decoded += "\\".repeat(Math.floor(slashCount / 2));
+			decoded += slashCount % 2 === 1 ? "\n" : "n";
+			i += slashCount;
+			continue;
+		}
+
+		decoded += "\\".repeat(slashCount);
+		i += slashCount - 1;
+	}
+
+	return decoded;
+}
+
 export const generateGraph = (newText: string, directed: boolean) => {
 	const ret: Graph = { directed: directed, vertices: [], edges: [] };
 	const lines = newText.split("\n");
@@ -16,10 +45,12 @@ export const generateGraph = (newText: string, directed: boolean) => {
 			if (res !== null) {
 				console.log(res);
 				const [, id, label] = res;
+				const decodedLabel =
+					label === undefined ? undefined : decodeEscapedNewlines(label);
 				if (ret.vertices.some((v) => (v.id === parseInt(id)))) {
-					renameVertex(ret, parseInt(id), label);
+					renameVertex(ret, parseInt(id), decodedLabel);
 				}
-				else addVertexIfNotExist(ret, parseInt(id), label);
+				else addVertexIfNotExist(ret, parseInt(id), decodedLabel);
 			}
 		}
 		const matchEdge = () => {
@@ -29,7 +60,9 @@ export const generateGraph = (newText: string, directed: boolean) => {
 			if (res !== null) {
 				const [, from, to, labelRaw] = res;
 				const label =
-					labelRaw !== undefined && labelRaw.trim() !== "" ? labelRaw.trim() : null;
+					labelRaw !== undefined && labelRaw.trim() !== ""
+						? decodeEscapedNewlines(labelRaw.trim())
+						: null;
 				addEdge(ret, edgeId++, parseInt(from), parseInt(to), label);
 			}
 		}
@@ -72,6 +105,8 @@ export default function TextEditor() {
 					lone vertex - id <br/>
 					labeled vertex - id: label <br/>
 					edge - id1 id2 <br/>
+					use \n in labels for line breaks <br/>
+					use \\n for a literal \n <br/>
 				</p>: null}
 			</div>
 			<div className="grow ">

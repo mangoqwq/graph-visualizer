@@ -20,6 +20,49 @@ import { parseJsonSourceFileConfigFileContent } from "typescript";
 export const graphViewDimRatio = 5 / 6;
 const r = 20;
 
+type MultilineSvgTextProps = Omit<React.SVGProps<SVGTextElement>, "children"> & {
+  x: number;
+  y: number;
+  text: string;
+  lineHeightEm?: number;
+};
+
+function getFontSizePx(fontSize: React.SVGProps<SVGTextElement>["fontSize"]) {
+  if (typeof fontSize === "number") return fontSize;
+  if (typeof fontSize === "string") {
+    const parsed = Number.parseFloat(fontSize);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 16;
+}
+
+function MultilineSvgText({
+  x,
+  y,
+  text,
+  lineHeightEm = 1.2,
+  ...textProps
+}: MultilineSvgTextProps) {
+  const lines = text.split("\n");
+  const lineHeightPx = getFontSizePx(textProps.fontSize) * lineHeightEm;
+  const centerOffset = (lines.length - 1) / 2;
+
+  return (
+    <text x={x} y={y} {...textProps}>
+      {lines.map((line, index) => (
+        <tspan
+          key={index}
+          x={x}
+          y={y + (index - centerOffset) * lineHeightPx}
+          dominantBaseline="middle"
+        >
+          {line === "" ? "\u00A0" : line}
+        </tspan>
+      ))}
+    </text>
+  );
+}
+
 function placeInBounds(v: Vector, dim: number) {
   var { x: vx, y: vy } = v;
   if (vx < 2 * r) vx = 2 * r;
@@ -156,16 +199,14 @@ function VertexView({ v }: { v: Vertex }) {
           // fill={vertexStates.get(v.id)!.heldAt !== null ? "grey" : "white"}
           fill={vertexStates.get(v.id)!.fillColor}
         />
-        <text
-          // x={cx}
-          // y={cy}
+        <MultilineSvgText
+          x={0}
+          y={0}
           textAnchor="middle"
-          alignmentBaseline="middle"
           className="select-none"
           fontWeight={vertexStates.get(v.id)!.textBold ? "bold" : "normal"}
-        >
-          {v.label === null ? v.id : v.label}
-        </text>
+          text={v.label === null ? v.id.toString() : v.label}
+        />
       </g>
     </Draggable>
   );
@@ -376,19 +417,17 @@ function EdgeView({ e, parallelIndex, parallelCount }: EdgeViewProps) {
         )}
 
         {e.label && (
-          <text
+          <MultilineSvgText
             x={labelPos.x}
             y={labelPos.y}
             textAnchor="middle"
-            alignmentBaseline="middle"
             fontSize="16"
             stroke="white"
             strokeWidth="3"
             paintOrder="stroke fill"
             pointerEvents="none"
-          >
-            {e.label}
-          </text>
+            text={e.label}
+          />
         )}
         {/* <text x={(x1 + x2) / 2} y={(y1 + y2) / 2}>{e.id}</text> */}
       </g>
