@@ -19,6 +19,11 @@ import { parseJsonSourceFileConfigFileContent } from "typescript";
 // const dim = (typeof window !== undefined ? window.innerHeight * 0.8 : 800);
 export const graphViewDimRatio = 5 / 6;
 const r = 20;
+const SELF_LOOP_ANCHOR_FACTOR = Math.SQRT1_2;
+const SELF_LOOP_WIDTH_BASE = r + 18;
+const SELF_LOOP_WIDTH_STEP = 24;
+const SELF_LOOP_HEIGHT_BASE = r + 32;
+const SELF_LOOP_HEIGHT_STEP = 30;
 
 type MultilineSvgTextProps = Omit<React.SVGProps<SVGTextElement>, "children"> & {
   x: number;
@@ -261,6 +266,84 @@ function EdgeView({ e, parallelIndex, parallelCount }: EdgeViewProps) {
   const { x: x2, y: y2 } = vertexStates.get(e.to)!.pos;
   const radius = 20; // radius of the nodes
 
+  if (e.from === e.to) {
+    const anchorOffset = radius * SELF_LOOP_ANCHOR_FACTOR;
+    const loopWidth = SELF_LOOP_WIDTH_BASE + parallelIndex * SELF_LOOP_WIDTH_STEP;
+    const loopHeight =
+      SELF_LOOP_HEIGHT_BASE + parallelIndex * SELF_LOOP_HEIGHT_STEP;
+    const start = {
+      x: x1 - anchorOffset,
+      y: y1 - anchorOffset,
+    };
+    const end = {
+      x: x1 + anchorOffset,
+      y: y1 - anchorOffset,
+    };
+    const control1 = {
+      x: x1 - loopWidth,
+      y: y1 - loopHeight,
+    };
+    const control2 = {
+      x: x1 + loopWidth,
+      y: y1 - loopHeight,
+    };
+    const loopPath = `M ${start.x} ${start.y} C ${control1.x} ${control1.y} ${control2.x} ${control2.y} ${end.x} ${end.y}`;
+    const loopMidpoint = {
+      x: (start.x + 3 * control1.x + 3 * control2.x + end.x) / 8,
+      y: (start.y + 3 * control1.y + 3 * control2.y + end.y) / 8,
+    };
+    const labelPos = {
+      x: loopMidpoint.x,
+      y: loopMidpoint.y,
+    };
+
+    return (
+      <svg>
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="5"
+            markerHeight="6"
+            refX="5"
+            refY="3.5"
+            orient="auto"
+          >
+            <polygon points="0 0, 5 3, 0 6" />
+          </marker>
+        </defs>
+        <g onMouseEnter={onMouseEnter} onClick={onClick} pointerEvents="all">
+          <path
+            d={loopPath}
+            stroke="black"
+            visibility="hidden"
+            strokeWidth="13"
+            fill="none"
+          />
+          <path
+            d={loopPath}
+            stroke={edgeStates.get(e.id)?.color ?? "black"}
+            strokeWidth="2"
+            fill="none"
+            markerEnd={graph.directed ? "url(#arrowhead)" : ""}
+          />
+          {e.label && (
+            <MultilineSvgText
+              x={labelPos.x}
+              y={labelPos.y}
+              textAnchor="middle"
+              fontSize="16"
+              stroke="white"
+              strokeWidth="3"
+              paintOrder="stroke fill"
+              pointerEvents="none"
+              text={e.label}
+            />
+          )}
+        </g>
+      </svg>
+    );
+  }
+
   const dx = x2 - x1;
   const dy = y2 - y1;
 
@@ -268,6 +351,10 @@ function EdgeView({ e, parallelIndex, parallelCount }: EdgeViewProps) {
 
   const unitX = dx / len;
   const unitY = dy / len;
+  // Use a canonical pair direction so A->B and B->A fan to opposite sides.
+  const familyDirection = e.from < e.to ? 1 : -1;
+  const familyUnitX = unitX * familyDirection;
+  const familyUnitY = unitY * familyDirection;
 
   const x1_adjusted = x1 + unitX * radius;
   const y1_adjusted = y1 + unitY * radius;
@@ -278,8 +365,8 @@ function EdgeView({ e, parallelIndex, parallelCount }: EdgeViewProps) {
   const midX = (x1_adjusted + x2_adjusted) / 2;
   const midY = (y1_adjusted + y2_adjusted) / 2;
 
-  const perpX = -unitY;
-  const perpY = unitX;
+  const perpX = -familyUnitY;
+  const perpY = familyUnitX;
 
   const offsetStep = 80;
   const offset =

@@ -105,6 +105,7 @@ export default function TextEditor() {
 					lone vertex - id <br/>
 					labeled vertex - id: label <br/>
 					edge - id1 id2 <br/>
+					self-loop - id id <br/>
 					use \n in labels for line breaks <br/>
 					use \\n for a literal \n <br/>
 				</p>: null}
